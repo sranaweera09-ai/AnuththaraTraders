@@ -1,0 +1,1998 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Anuththara Traders</title>
+  <style>
+    body{font-family:Segoe UI, Roboto, Arial, sans-serif; padding:8px; margin:0; color:#F7E9C4;}
+    /* Plain black background for high contrast */
+    body{
+      background-color:#000000;
+      background-image:none;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    @media (max-width:768px) { body{padding:4px;} }
+
+    /* watermark using the logo file (save anuththara-logo.png next to this file) */
+    .watermark{
+      position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.06; display:block; background-repeat:no-repeat; background-position:center top; background-size:420px 420px;
+    }
+
+    .center{max-width:900px;margin:0 auto;text-align:center; position:relative; z-index:1}
+    .logo{width:4cm;height:3.2cm;display:block;margin:0 auto 6px}
+    @media (max-width:768px) { .logo{width:3.2cm;height:2.56cm;margin:0 auto 4px;} }
+    @media (max-width:520px) { .logo{width:2.5cm;height:2cm;margin:0 auto 2px;} }
+    h1{margin:4px 0; color:#fff; font-size:24px;}
+    h2{color:#e7e0b8; font-size:18px;}
+    p{color:#e0d6a0; font-size:13px;}
+    @media (max-width:768px) { h1{font-size:20px;} h2{font-size:16px;} p{font-size:12px;} }
+    @media (max-width:520px) { h1{font-size:18px;} h2{font-size:14px;} p{font-size:11px;} }
+    @media (max-width:520px){ .watermark{background-size:260px 260px} }
+    /* Navigation menu styles - Left Sidebar */
+    .site-header{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;padding:8px 10px;z-index:2;background:rgba(0,0,0,0.95);border-bottom:2px solid #25d366;}
+    @media (max-width:768px) { .site-header{padding:6px 8px;} }
+    .hamburger-btn{display:block;background:#25d366;color:#000;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;font-size:16px;transition:all 0.3s;}
+    .hamburger-btn:hover{background:#2edc71;transform:scale(1.05);}
+    .site-nav{position:fixed;left:-280px;top:0;width:280px;height:100vh;background:linear-gradient(135deg, rgba(20,20,20,0.98) 0%, rgba(30,30,30,0.98) 100%);border-right:2px solid #25d366;padding:20px 0;z-index:1050;transition:left 0.3s ease;overflow-y:auto;}
+    .site-nav.active{left:0;}
+    .close-nav{display:none;background:transparent;border:none;color:#25d366;font-size:24px;cursor:pointer;padding:10px;margin:10px;float:right;}
+    .site-nav.active .close-nav{display:block;}
+    .menu{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0;}
+    .menu li{border-bottom:1px solid rgba(37,211,102,0.2);}
+    .menu a{color:#F7E9C4;text-decoration:none;padding:10px 16px;display:block;transition:background .2s,color .2s; font-size:13px;}
+    @media (max-width:768px) { .menu a{padding:8px 12px; font-size:12px;} }
+    @media (max-width:520px) { .menu a{padding:6px 10px; font-size:11px;} }
+    .menu a:hover{background:rgba(37,211,102,0.2);color:#25d366;}
+    /* Floating Menu Button */
+    .floating-menu-btn{position:fixed;left:20px;bottom:20px;width:60px;height:60px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;border:none;border-radius:50%;cursor:pointer;font-weight:bold;font-size:24px;display:flex;align-items:center;justify-content:center;transition:all 0.3s;box-shadow:0 8px 20px rgba(37, 211, 102, 0.3);z-index:998;}
+    .floating-menu-btn:hover{transform:scale(1.1);box-shadow:0 12px 30px rgba(37, 211, 102, 0.4);}
+    .floating-menu-btn:active{transform:scale(0.95);}
+    /* Left Sidebar Menu Bar */
+    .left-menu-bar{position:fixed;left:-60px;top:60px;width:60px;height:calc(100vh - 60px);background:linear-gradient(135deg, rgba(20,20,20,0.98) 0%, rgba(30,30,30,0.98) 100%);border-right:2px solid #25d366;display:flex;flex-direction:column;gap:0;padding:4px 0;z-index:1000;overflow-y:auto;transition:left 0.3s ease;}
+    .left-menu-bar.active{left:0;}
+    .left-menu-btn{width:100%;padding:6px 0;background:transparent;border:none;border-bottom:1px solid rgba(37,211,102,0.2);color:#f6eec2;cursor:pointer;font-size:18px;transition:all 0.3s;display:flex;align-items:center;justify-content:center;height:50px;}
+    .left-menu-btn:hover{background:rgba(37,211,102,0.2);color:#25d366;transform:scale(1.05);}
+    @media (max-width:768px){ .left-menu-bar{width:55px;} .left-menu-btn{font-size:16px;height:45px;} }
+    @media (max-width:768px){
+      .hamburger-btn{display:block;}
+      .floating-menu-btn{display:flex;}
+      .site-header{flex-wrap:wrap;}
+    }
+    .nav-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;display:none;pointer-events:none;}
+    .nav-overlay.active{display:block;pointer-events:auto;}
+
+    /* Premium Floating Sidebar Styles */
+    .floating-sidebar{
+      position:fixed;right:20px;bottom:20px;z-index:999;display:flex;flex-direction:column;gap:14px;background:linear-gradient(135deg, rgba(20,20,20,0.98) 0%, rgba(30,30,30,0.98) 100%);padding:18px;border-radius:16px;border:2px solid #25d366;box-shadow:0 20px 60px rgba(37, 211, 102, 0.3), inset 0 1px 0 rgba(255,255,255,0.1);backdrop-filter:blur(20px);transition:all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .floating-sidebar:hover{
+      box-shadow:0 30px 80px rgba(37, 211, 102, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+      border-color:#2edc71;
+      transform:translateY(-5px);
+    }
+
+    .sidebar-btn{
+      padding:8px 12px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:11px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);text-align:center;white-space:nowrap;min-width:90px;box-shadow:0 6px 15px rgba(37, 211, 102, 0.25), inset 0 1px 0 rgba(255,255,255,0.3);position:relative;overflow:hidden;
+    }
+
+    .sidebar-btn::before{
+      content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);transition:left 0.5s;
+    }
+
+    .sidebar-btn:hover{
+      background:linear-gradient(135deg, #2edc71 0%, #25d366 100%);
+      transform:translateY(-3px) scale(1.08);
+      box-shadow:0 12px 30px rgba(37, 211, 102, 0.4), inset 0 1px 0 rgba(255,255,255,0.4);
+    }
+
+    .sidebar-btn:hover::before{
+      left:100%;
+    }
+
+    .sidebar-btn:active{
+      transform:translateY(-1px) scale(1.05);
+    }
+
+    .sidebar-divider{
+      height:1px;background:linear-gradient(90deg, transparent, rgba(37, 211, 102, 0.5), transparent);margin:8px 0;
+    }
+
+    .sidebar-label{
+      color:#25d366;font-size:11px;text-transform:uppercase;font-weight:bold;padding:0 4px;margin-top:6px;letter-spacing:1px;text-shadow:0 0 10px rgba(37, 211, 102, 0.2);
+    }
+
+    .category-quick-btn{
+      padding:10px 14px;background:linear-gradient(135deg, rgba(37, 211, 102, 0.1) 0%, rgba(32, 184, 84, 0.1) 100%);color:#f6eec2;border:2px solid #25d366;border-radius:8px;cursor:pointer;font-weight:bold;font-size:12px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);text-align:center;box-shadow:0 4px 15px rgba(37, 211, 102, 0.15), inset 0 1px 0 rgba(255,255,255,0.1);position:relative;
+    }
+
+    .category-quick-btn:hover{
+      background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;border-color:#2edc71;transform:translateY(-3px);box-shadow:0 8px 25px rgba(37, 211, 102, 0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+
+    .category-quick-btn:active{
+      transform:translateY(-1px);
+    }
+
+    /* Premium Contact Buttons Styles */
+    .contact-call-btn{
+      transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    }
+
+    .contact-call-btn:hover{
+      transform:translateY(-4px) !important;
+      box-shadow:0 16px 40px rgba(37, 211, 102, 0.35) !important;
+    }
+
+    .contact-call-btn:active{
+      transform:translateY(-1px) !important;
+    }
+
+    .scroll-top-btn{
+      opacity:0;transition:opacity 0.3s;pointer-events:none;
+    }
+
+    .scroll-top-btn.show{
+      opacity:1;pointer-events:auto;
+    }
+
+    @media (max-width:768px){
+      .floating-sidebar{
+        right:10px;bottom:10px;padding:12px;
+      }
+      .sidebar-btn{min-width:100px;padding:8px 10px;font-size:11px;}
+      .category-quick-btn{padding:6px 10px;font-size:10px;}
+    }
+    #google_translate_element{padding:10px 0;}
+    .goog-te-gadget{color:#f6eec2 !important;}
+    .goog-te-gadget .goog-te-combo{background:#222 !important;border:1px solid #444 !important;color:#f6eec2 !important;border-radius:6px !important;padding:8px !important;font-weight:bold !important;}
+  </style>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<body>
+  <div class="nav-overlay" id="navOverlay"></div>
+  <!-- Left Menu Bar -->
+  <div class="left-menu-bar" id="leftMenuBar">
+    <button class="left-menu-btn" title="Home" onclick="document.location.href='#';">🏠</button>
+    <button class="left-menu-btn" title="Brands" onclick="document.location.href='#brands';">🏷️</button>
+    <button class="left-menu-btn" title="Products" onclick="document.location.href='#products';">📦</button>
+    <button class="left-menu-btn" title="Order" onclick="document.location.href='#order';">🛒</button>
+    <button class="left-menu-btn" title="Categories" onclick="document.location.href='#categories';">📂</button>
+    <button class="left-menu-btn" title="Services" onclick="document.location.href='#services';">⭐</button>
+    <button class="left-menu-btn" title="Contact" onclick="document.location.href='#contact';">📞</button>
+  </div>
+  <div class="site-header">
+    <button class="hamburger-btn" id="hamburgerBtn">☰ Menu</button>
+    <nav class="site-nav" id="siteNav" aria-label="Main navigation">
+      <button class="close-nav" id="closeNav">✕</button>
+      <ul class="menu">
+        <li><a href="#">🏠 Home</a></li>
+        <li><a href="#brands">🏷️ Brands</a></li>
+        <li><a href="#products">📦 Products</a></li>
+        <li><a href="#order">🛒 Online Order</a></li>
+        <li><a href="#categories">📂 Categories</a></li>
+        <li><a href="#services">⭐ Services</a></li>
+        <li><a href="#buynowpaylater">💳 Buy Now Pay Later</a></li>
+        <li><a href="#contact">📞 Contact</a></li>
+      </ul>
+    </nav>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button id="translateShortcutBtn" title="Toggle Google Translate" style="padding:6px 12px;border-radius:6px;background:#25d366;color:#000;border:none;cursor:pointer;font-weight:bold;font-size:13px;transition:all 0.3s;">🌐 Translate</button>
+      <div id="google_translate_element" style="display:none;"></div>
+      <button id="adminAccessBtn" style="padding:6px 12px;border-radius:6px;background:#666;color:#fff;border:none;cursor:pointer;font-weight:bold;font-size:13px;">Admin</button>
+    </div>
+  </div>
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'en,si,ta', layout: google.translate.TranslateElement.InlineLayout.SIMPLE}, 'google_translate_element');
+    }
+    
+    // Google Translate Shortcut Button
+    document.addEventListener('DOMContentLoaded', function() {
+      const translateBtn = document.getElementById('translateShortcutBtn');
+      const translateElement = document.getElementById('google_translate_element');
+      
+      if (translateBtn && translateElement) {
+        translateBtn.addEventListener('click', function() {
+          if (translateElement.style.display === 'none') {
+            translateElement.style.display = 'inline-block';
+            translateBtn.style.background = '#20b854';
+            translateBtn.textContent = '🌐 Hide Translate';
+          } else {
+            translateElement.style.display = 'none';
+            translateBtn.style.background = '#25d366';
+            translateBtn.textContent = '🌐 Translate';
+          }
+        });
+      }
+    });
+  </script>
+  <div class="center">
+    <img src="images/WhatsApp Image 2026-01-11 at 12.43.02 PM.jpeg" alt="Anuththara Traders logo" class="logo">
+    <h1>Anuththara Traders</h1>
+    <h2>Welcome for our website</h2>
+    <p>A store for all your needs.</p>
+    
+    <!-- Quick Action Buttons -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:32px;max-width:600px;margin-left:auto;margin-right:auto;">
+      <a href="#order" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 24px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;border-radius:10px;text-decoration:none;font-weight:bold;font-size:15px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);border:2px solid #25d366;box-shadow:0 8px 20px rgba(37, 211, 102, 0.25);cursor:pointer;">
+        <span style="font-size:24px;">🛒</span>
+        <span>Online Order</span>
+      </a>
+      <a href="#buynowpaylater" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 24px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;border-radius:10px;text-decoration:none;font-weight:bold;font-size:15px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);border:2px solid #667eea;box-shadow:0 8px 20px rgba(102, 126, 234, 0.25);cursor:pointer;">
+        <span style="font-size:24px;">💳</span>
+        <span>Buy Now Pay Later</span>
+      </a>
+    </div>
+  </div>
+  
+  <!-- Sections for menu targets -->
+
+  <section id="order" style="padding:36px 18px; max-width:900px;margin:24px auto;color:#e6dfb0;background:rgba(0,0,0,0.7);border-radius:8px;background-image:url('G:/EDUCATION/coding/front-view-cyber-monday-shopping-cart-with-bags-copy-space.jpg');background-size:cover;background-position:center;background-blend-mode:multiply;position:relative;">
+    <h3>🛒 Online Order</h3>
+    <p style="margin-bottom:16px;color:#e0d6a0;">Order your groceries online and get them delivered to your doorstep! Our convenient online ordering system makes shopping easy and fast.</p>
+    <div style="background:rgba(0,0,0,0.5);padding:16px;border-radius:8px;margin-bottom:20px;border-left:4px solid #25d366;">
+      <strong style="color:#25d366;display:block;margin-bottom:10px;">✨ Why Order Online?</strong>
+      <ul style="margin:8px 0;padding-left:20px;color:#e0d6a0;">
+        <li>🚀 <strong>Fast & Convenient</strong> - Browse and order from home anytime</li>
+        <li>📱 <strong>Easy Item Selection</strong> - Search by category, brand, or product name</li>
+        <li>💚 <strong>Smart Filtering</strong> - Find exactly what you need quickly</li>
+        <li>🏪 <strong>Flexible Quantities</strong> - Add any quantity you need</li>
+        <li>🏠 <strong>Home Delivery</strong> - Fast and reliable delivery to your address</li>
+        <li>📞 <strong>Personal Confirmation</strong> - Our team calls to confirm your order</li>
+      </ul>
+    </div>
+    <form action="https://formsubmit.co/anuththaratraders@gmail.com" method="POST" style="display:flex;flex-direction:column;gap:12px;max-width:400px;margin:0 auto;background:#181818;padding:24px;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,0.18);">
+      <input type="text" name="name" placeholder="Your Name" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">
+      <input type="tel" name="phone" placeholder="Phone Number" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">
+      <input type="text" name="address" placeholder="Address" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">
+      <input type="text" name="city" placeholder="City" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <input type="number" name="day" placeholder="Day (1-31)" min="1" max="31" style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">
+        <select name="month" style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">
+          <option value="">Select Month</option>
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+      </div>
+      <button id="needNowBtn" type="button" style="padding:6px 12px;border-radius:6px;background:#ff6b6b;color:#fff;font-weight:bold;border:none;cursor:pointer;font-size:14px;align-self:flex-start;">I need it now</button>
+      <div style="position:relative;">
+        <textarea name="order" placeholder="List your items here..." rows="4" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;width:100%;box-sizing:border-box;"></textarea>
+        <button id="quickPickBtn" type="button" style="position:absolute;right:8px;bottom:8px;padding:6px 12px;background:#25d366;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:bold;">Pick Items</button>
+      </div>
+      <button type="submit" style="padding:10px 0;border-radius:6px;background:#f6eec2;color:#222;font-weight:bold;border:none;cursor:pointer;width:100%;">Place Order</button>
+    </form>
+    <p style="margin-top:10px;color:#e0d6a0;font-size:14px;">We will call you to confirm your order and arrange delivery or pickup.</p>
+  </section>
+
+  <section id="buynowpaylater" style="padding:36px 18px; max-width:900px;margin:24px auto;color:#e6dfb0;background:rgba(20,20,20,0.4);border-radius:8px;position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;">💳 Buy Now Pay Later</h3>
+      <button type="button" id="bnplSubmitBtn" style="padding:10px 20px;border-radius:6px;background:#f6eec2;color:#222;font-weight:bold;border:none;cursor:pointer;font-size:14px;">Apply for Buy Now Pay Later</button>
+    </div>
+    <p style="margin-bottom:16px;color:#e0d6a0;">Get the groceries you need today and pay in convenient installments. No stress, no waiting - apply now to get approved!</p>
+    <div style="background:rgba(255,255,255,0.05);padding:18px;border-radius:8px;margin-bottom:20px;border-left:4px solid #25d366;border:1px solid rgba(37, 211, 102, 0.3);">
+      <strong style="color:#25d366;display:block;margin-bottom:10px;">✨ BNPL Benefits:</strong>
+      <ul style="margin:8px 0;padding-left:20px;color:#e0d6a0;">
+        <li>💚 <strong>Flexible Payments</strong> - Pay in installments up to 30 days</li>
+        <li>📊 <strong>No Interest</strong> - Get approved instantly with transparent pricing</li>
+        <li>🏪 <strong>Easy Application</strong> - Simple verification process with just your NIC</li>
+        <li>⚡ <strong>Quick Approval</strong> - Get approved within 24 hours</li>
+        <li>🛒 <strong>Shop Now</strong> - Get your groceries immediately, pay later</li>
+        <li>📱 <strong>Flexible Terms</strong> - Choose your payment period (1-30 days)</li>
+      </ul>
+    </div>
+    <p style="color:#f0e6b8;font-size:14px;font-weight:bold;background:#222;padding:12px;border-radius:6px;margin-bottom:16px;">⏳ We offer installment periods up to 30 days. Select your preferred payment period (1-30 days).</p>
+    <form style="display:none;flex-direction:column;gap:12px;max-width:400px;margin:0 auto;background:#181818;padding:24px;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,0.18);">
+      <input type="text" name="fullName" placeholder="Full Name" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">
+      <input type="text" name="nic" placeholder="NIC Number" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">
+      <input type="tel" name="phone" placeholder="Phone Number" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">
+      <input type="text" name="address" placeholder="Address" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">
+      <input type="text" name="city" placeholder="City" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">
+      <input type="number" name="installments" placeholder="Period (1-30 Days)" min="1" max="30" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">
+      <div style="background:#222;padding:12px;border-radius:6px;margin:8px 0;">
+        <label style="display:flex;align-items:flex-start;gap:10px;color:#f6eec2;cursor:pointer;">
+          <input type="checkbox" name="agreement" id="bnplAgreement" required style="margin-top:4px;cursor:pointer;">
+          <span style="font-size:12px;">I agree to share my personal information and understand the <strong>Privacy Policy</strong>. My data will be used only for processing my Buy Now Pay Later application and I consent to being contacted regarding my application.</span>
+        </label>
+      </div>
+    </form>
+    <p style="margin-top:10px;color:#e0d6a0;font-size:14px;">Our team will review your application and contact you within 24 hours.</p>
+  </section>
+
+  <script>
+    // Admin products management - data stored in localStorage
+    let adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
+
+    // Admin button functionality
+    const adminAccessBtn = document.getElementById('adminAccessBtn');
+    if (adminAccessBtn) {
+      adminAccessBtn.addEventListener('click', showAdminPanel);
+    }
+
+    function showAdminPanel() {
+      const password = prompt('Enter admin password:');
+      if (password === 'admin123') {
+        openAdminPanel();
+      } else {
+        alert('Invalid password');
+      }
+    }
+
+    function openAdminPanel() {
+      let html = '<div style="background:#1a1a1a;max-width:1200px;margin:30px auto;border-radius:12px;padding:24px;color:#f6eec2;position:relative;z-index:1001;">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">';
+      html += '<h2 style="margin:0;">Admin Management Panel</h2>';
+      html += '<button id="closeAdminPanel" style="background:transparent;border:1px solid #888;color:#f6eec2;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:16px;">✕ Close</button>';
+      html += '</div>';
+
+      // TAB NAVIGATION
+      html += '<div style="display:flex;gap:12px;margin-bottom:20px;border-bottom:2px solid #444;">';
+      html += '<button id="productsTab" style="padding:10px 20px;background:#25d366;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;">Products</button>';
+      html += '<button id="brandsTab" style="padding:10px 20px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;">Brands</button>';
+      html += '<button id="historyTab" style="padding:10px 20px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;">Order & BNPL History</button>';
+      html += '</div>';
+
+      // PRODUCTS TAB
+      html += '<div id="productsTabContent" style="display:block;">';
+      // Add Product Form
+      html += '<div style="background:#222;padding:16px;border-radius:8px;margin-bottom:20px;border:1px solid #444;">';
+      html += '<h3 style="margin-top:0;color:#f6eec2;">Add New Product</h3>';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">';
+      html += '<input type="text" id="productName" placeholder="Product Name" style="padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
+      html += '<select id="productCategory" style="padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;"><option value="">Select Category</option><option value="produce">Produce</option><option value="dairy">Dairy</option><option value="bakery">Bakery</option><option value="meat">Meat</option><option value="pantry">Pantry</option><option value="beverages">Beverages</option><option value="snacks">Snacks</option></select>';
+      html += '<select id="productBrand" style="padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;"><option value="">Select Brand</option>';
+      let adminBrands = JSON.parse(localStorage.getItem('adminBrands')) || [];
+      adminBrands.forEach(brand => {
+        const brandName = typeof brand === 'string' ? brand : brand.name;
+        html += `<option value="${brandName}">${brandName}</option>`;
+      });
+      html += '</select>';
+      html += '<input type="number" id="productPrice" placeholder="Price (LKR)" style="padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
+      html += '<input type="number" id="productStock" placeholder="Stock Quantity" style="padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
+      html += '</div>';
+      html += '<button id="addProductBtn" style="width:100%;padding:10px;background:#25d366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">Add Product</button>';
+      html += '</div>';
+
+      // Products List
+      html += '<div style="margin-top:20px;">';
+      html += '<h3 style="color:#f6eec2;">Current Products</h3>';
+      html += '<div style="max-height:400px;overflow-y:auto;border:1px solid #444;border-radius:6px;">';
+      
+      adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
+      if (adminProducts.length === 0) {
+        html += '<div style="padding:20px;text-align:center;color:#999;">No products added yet</div>';
+      } else {
+        adminProducts.forEach((prod, idx) => {
+          html += `<div style="padding:12px;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;">
+            <div style="flex:1;">
+              <strong style="color:#f6eec2;">${prod.name}</strong><br>
+              <span style="font-size:12px;color:#999;">Brand: ${prod.brand || 'N/A'} | Category: ${prod.category} | Price: Rs.${prod.price} | Stock: ${prod.stock}</span>
+            </div>
+            <button data-idx="${idx}" class="deleteProductBtn" style="padding:6px 12px;background:#ff6b6b;color:#fff;border:none;border-radius:4px;cursor:pointer;">Delete</button>
+          </div>`;
+        });
+      }
+      
+      html += '</div>';
+      html += '</div>';
+      html += '</div>';
+
+      // BRANDS TAB
+      html += '<div id="brandsTabContent" style="display:none;">';
+      // Add Brand Form
+      html += '<div style="background:#222;padding:16px;border-radius:8px;margin-bottom:20px;border:1px solid #444;">';
+      html += '<h3 style="margin-top:0;color:#f6eec2;">Add New Brand</h3>';
+      html += '<div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;">';
+      html += '<input type="text" id="brandName" placeholder="Brand Name" style="flex:1;padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
+      html += '<input type="file" id="brandImage" accept="image/*" style="flex:1;padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;cursor:pointer;">';
+      html += '<button id="addBrandBtn" style="padding:8px 20px;background:#25d366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;white-space:nowrap;">Add Brand</button>';
+      html += '</div>';
+      html += '<div id="brandImagePreview" style="margin-top:12px;display:none;">';
+      html += '<img id="brandImagePreviewImg" src="" style="max-width:100px;max-height:100px;border-radius:6px;border:1px solid #444;">';
+      html += '</div>';
+      html += '</div>';
+
+      // Brands List
+      html += '<div style="margin-top:20px;">';
+      html += '<h3 style="color:#f6eec2;">Current Brands</h3>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;">';
+      
+      if (adminBrands.length === 0) {
+        html += '<div style="padding:20px;text-align:center;color:#999;grid-column:1/-1;">No brands added yet</div>';
+      } else {
+        adminBrands.forEach((brand, idx) => {
+          const brandName = typeof brand === 'string' ? brand : brand.name;
+          html += `<div style="background:#222;border:1px solid #444;border-radius:8px;padding:12px;text-align:center;">
+            <strong style="color:#f6eec2;display:block;margin-bottom:10px;">${brandName}</strong>
+            <button data-brand="${brandName}" class="deleteBrandBtn" style="width:100%;padding:6px;background:#ff6b6b;color:#fff;border:none;border-radius:4px;cursor:pointer;">Delete</button>
+          </div>`;
+        });
+      }
+      html += '</div>';
+      
+      html += '</div>';
+      html += '</div>';
+      html += '</div>';
+
+      // HISTORY TAB
+      html += '<div id="historyTabContent" style="display:none;">';
+      html += '<div style="display:flex;gap:12px;margin-bottom:20px;">';
+      html += '<button id="historyFilterOrders" style="padding:10px 20px;background:#25d366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">Orders</button>';
+      html += '<button id="historyFilterBNPL" style="padding:10px 20px;background:#444;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">BNPL Applications</button>';
+      html += '<button id="historyClearAll" style="padding:10px 20px;background:#ff6b6b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;margin-left:auto;">Clear All History</button>';
+      html += '</div>';
+      
+      html += '<div id="ordersHistory" style="display:block;max-height:600px;overflow-y:auto;border:1px solid #444;border-radius:6px;">';
+      let orderHistory = JSON.parse(localStorage.getItem('orderHistory')) || [];
+      if (orderHistory.length === 0) {
+        html += '<div style="padding:20px;text-align:center;color:#999;">No orders yet</div>';
+      } else {
+        html += `<div style="padding:12px;background:#222;border-bottom:1px solid #444;font-weight:bold;color:#f6eec2;display:grid;grid-template-columns:2fr 1.5fr 1.5fr;gap:12px;">
+          <div>Customer Details</div>
+          <div>Order Info</div>
+          <div>Date & Time</div>
+        </div>`;
+        orderHistory.reverse().forEach((order, idx) => {
+          html += `<div style="padding:12px;border-bottom:1px solid #333;">
+            <div style="display:grid;grid-template-columns:2fr 1.5fr 1.5fr;gap:12px;align-items:start;">
+              <div style="font-size:12px;color:#ccc;">
+                <div style="color:#f6eec2;font-weight:bold;margin-bottom:4px;">${order.name}</div>
+                <span style="display:block;">Phone: ${order.phone}</span>
+                <span style="display:block;">Address: ${order.address}, ${order.city}</span>
+              </div>
+              <div style="font-size:12px;color:#ccc;">
+                <span style="display:block;color:#f0e6b8;font-weight:bold;">Delivery: ${order.day}/${order.month}</span>
+                <span style="display:block;margin-top:4px;max-height:80px;overflow:auto;background:#111;padding:4px;border-radius:3px;">Order: ${order.order}</span>
+              </div>
+              <div style="font-size:12px;color:#f6eec2;">
+                <div style="background:#25d366;color:#000;padding:8px;border-radius:4px;text-align:center;font-weight:bold;">${new Date(order.timestamp).toLocaleDateString()}</div>
+                <div style="margin-top:6px;text-align:center;color:#f0e6b8;font-weight:bold;">${new Date(order.timestamp).toLocaleTimeString()}</div>
+              </div>
+            </div>
+          </div>`;
+        });
+      }
+      html += '</div>';
+      
+      html += '<div id="bnplHistory" style="display:none;max-height:600px;overflow-y:auto;border:1px solid #444;border-radius:6px;">';
+      let bnplHistory = JSON.parse(localStorage.getItem('bnplHistory')) || [];
+      if (bnplHistory.length === 0) {
+        html += '<div style="padding:20px;text-align:center;color:#999;">No BNPL applications yet</div>';
+      } else {
+        html += `<div style="padding:12px;background:#222;border-bottom:1px solid #444;font-weight:bold;color:#f6eec2;display:grid;grid-template-columns:2fr 1.5fr 1.5fr;gap:12px;">
+          <div>Applicant Details</div>
+          <div>Application Info</div>
+          <div>Date & Time</div>
+        </div>`;
+        bnplHistory.reverse().forEach((app, idx) => {
+          html += `<div style="padding:12px;border-bottom:1px solid #333;">
+            <div style="display:grid;grid-template-columns:2fr 1.5fr 1.5fr;gap:12px;align-items:start;">
+              <div style="font-size:12px;color:#ccc;">
+                <div style="color:#f6eec2;font-weight:bold;margin-bottom:4px;">${app.fullName}</div>
+                <span style="display:block;">NIC: ${app.nic}</span>
+                <span style="display:block;">Phone: ${app.phone}</span>
+                <span style="display:block;">Address: ${app.address}, ${app.city}</span>
+              </div>
+              <div style="font-size:12px;color:#ccc;">
+                <span style="display:block;color:#f0e6b8;font-weight:bold;background:#222;padding:6px;border-radius:3px;">Installments: ${app.installments} Days</span>
+              </div>
+              <div style="font-size:12px;color:#f6eec2;">
+                <div style="background:#ff9800;color:#000;padding:8px;border-radius:4px;text-align:center;font-weight:bold;">${new Date(app.timestamp).toLocaleDateString()}</div>
+                <div style="margin-top:6px;text-align:center;color:#f0e6b8;font-weight:bold;">${new Date(app.timestamp).toLocaleTimeString()}</div>
+              </div>
+            </div>
+          </div>`;
+        });
+      }
+      html += '</div>';
+      
+      html += '</div>';
+
+      html += '</div>';
+
+      // Create overlay
+      const overlay = document.createElement('div');
+      overlay.id = 'adminPanelOverlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
+      overlay.innerHTML = html;
+      document.body.appendChild(overlay);
+
+      // Close button
+      document.getElementById('closeAdminPanel').addEventListener('click', () => {
+        overlay.remove();
+        loadAdminProducts();
+      });
+
+      // Tab switching
+      document.getElementById('productsTab').addEventListener('click', () => {
+        document.getElementById('productsTabContent').style.display = 'block';
+        document.getElementById('brandsTabContent').style.display = 'none';
+        document.getElementById('historyTabContent').style.display = 'none';
+        document.getElementById('productsTab').style.background = '#25d366';
+        document.getElementById('brandsTab').style.background = '#444';
+        document.getElementById('historyTab').style.background = '#444';
+      });
+
+      document.getElementById('brandsTab').addEventListener('click', () => {
+        document.getElementById('productsTabContent').style.display = 'none';
+        document.getElementById('brandsTabContent').style.display = 'block';
+        document.getElementById('historyTabContent').style.display = 'none';
+        document.getElementById('productsTab').style.background = '#444';
+        document.getElementById('brandsTab').style.background = '#25d366';
+        document.getElementById('historyTab').style.background = '#444';
+      });
+
+      document.getElementById('historyTab').addEventListener('click', () => {
+        document.getElementById('productsTabContent').style.display = 'none';
+        document.getElementById('brandsTabContent').style.display = 'none';
+        document.getElementById('historyTabContent').style.display = 'block';
+        document.getElementById('productsTab').style.background = '#444';
+        document.getElementById('brandsTab').style.background = '#444';
+        document.getElementById('historyTab').style.background = '#25d366';
+      });
+
+      // Add product button
+      document.getElementById('addProductBtn').addEventListener('click', () => {
+        const name = document.getElementById('productName').value.trim();
+        const category = document.getElementById('productCategory').value;
+        const brand = document.getElementById('productBrand').value;
+        const price = parseFloat(document.getElementById('productPrice').value);
+        const stock = parseInt(document.getElementById('productStock').value);
+
+        if (name && category && brand && price >= 0 && stock >= 0) {
+          adminProducts.push({name, category, brand, price, stock});
+          localStorage.setItem('adminProducts', JSON.stringify(adminProducts));
+          document.getElementById('productName').value = '';
+          document.getElementById('productCategory').value = '';
+          document.getElementById('productBrand').value = '';
+          document.getElementById('productPrice').value = '';
+          document.getElementById('productStock').value = '';
+          openAdminPanel();
+        } else {
+          alert('Please fill all fields correctly');
+        }
+      });
+
+      // Add brand button
+      document.getElementById('addBrandBtn').addEventListener('click', () => {
+        const brandName = document.getElementById('brandName').value.trim();
+        const brandImageInput = document.getElementById('brandImage');
+        let adminBrands = JSON.parse(localStorage.getItem('adminBrands')) || [];
+        
+        // Check if brand name already exists
+        const brandExists = adminBrands.some(b => {
+          const name = typeof b === 'string' ? b : b.name;
+          return name === brandName;
+        });
+
+        if (!brandName) {
+          alert('Please enter a brand name');
+          return;
+        }
+
+        if (brandExists) {
+          alert('Brand already exists');
+          return;
+        }
+
+        // Handle image if selected
+        if (brandImageInput.files.length > 0) {
+          const file = brandImageInput.files[0];
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const newBrand = {
+              name: brandName,
+              image: e.target.result
+            };
+            adminBrands.push(newBrand);
+            localStorage.setItem('adminBrands', JSON.stringify(adminBrands));
+            document.getElementById('brandName').value = '';
+            document.getElementById('brandImage').value = '';
+            document.getElementById('brandImagePreview').style.display = 'none';
+            openAdminPanel();
+          };
+          reader.readAsDataURL(file);
+        } else {
+          // Add brand without image
+          const newBrand = {
+            name: brandName,
+            image: null
+          };
+          adminBrands.push(newBrand);
+          localStorage.setItem('adminBrands', JSON.stringify(adminBrands));
+          document.getElementById('brandName').value = '';
+          document.getElementById('brandImage').value = '';
+          document.getElementById('brandImagePreview').style.display = 'none';
+          openAdminPanel();
+        }
+      });
+
+      // Brand image preview
+      document.getElementById('brandImage').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            const previewImg = document.getElementById('brandImagePreviewImg');
+            previewImg.src = evt.target.result;
+            document.getElementById('brandImagePreview').style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // Delete product buttons
+      document.querySelectorAll('.deleteProductBtn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(e.target.getAttribute('data-idx'));
+          if (confirm('Are you sure you want to delete this product?')) {
+            adminProducts.splice(idx, 1);
+            localStorage.setItem('adminProducts', JSON.stringify(adminProducts));
+            openAdminPanel();
+          }
+        });
+      });
+
+      // Delete brand buttons
+      document.querySelectorAll('.deleteBrandBtn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const brand = e.target.getAttribute('data-brand');
+          if (confirm('Are you sure you want to delete this brand?')) {
+            let adminBrands = JSON.parse(localStorage.getItem('adminBrands')) || [];
+            adminBrands = adminBrands.filter(b => {
+              const name = typeof b === 'string' ? b : b.name;
+              return name !== brand;
+            });
+            localStorage.setItem('adminBrands', JSON.stringify(adminBrands));
+            openAdminPanel();
+          }
+        });
+      });
+
+      // History tab filters
+      document.getElementById('historyFilterOrders').addEventListener('click', () => {
+        document.getElementById('ordersHistory').style.display = 'block';
+        document.getElementById('bnplHistory').style.display = 'none';
+        document.getElementById('historyFilterOrders').style.background = '#25d366';
+        document.getElementById('historyFilterBNPL').style.background = '#444';
+      });
+
+      document.getElementById('historyFilterBNPL').addEventListener('click', () => {
+        document.getElementById('ordersHistory').style.display = 'none';
+        document.getElementById('bnplHistory').style.display = 'block';
+        document.getElementById('historyFilterOrders').style.background = '#444';
+        document.getElementById('historyFilterBNPL').style.background = '#25d366';
+      });
+
+      document.getElementById('historyClearAll').addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear ALL history? This cannot be undone.')) {
+          localStorage.removeItem('orderHistory');
+          localStorage.removeItem('bnplHistory');
+          openAdminPanel();
+        }
+      });
+
+      // Close on overlay click
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.remove();
+          loadAdminProducts();
+          loadAdminBrands();
+        }
+      });
+    }
+
+    // Load and display admin brands in brands section
+    function loadAdminBrands() {
+      const brandsDiv = document.getElementById('adminBrandsList');
+      if (brandsDiv) {
+        let adminBrands = JSON.parse(localStorage.getItem('adminBrands')) || [];
+        if (adminBrands.length > 0) {
+          let html = '';
+          adminBrands.forEach(brand => {
+            const brandName = typeof brand === 'string' ? brand : brand.name;
+            html += `<div style="background:#222;padding:16px;border-radius:6px;border:2px solid #f6eec2;text-align:center;cursor:pointer;transition:transform 0.2s;overflow:hidden;" class="brandCard" data-brand="${brandName}">
+              <strong style="color:#f6eec2;font-size:18px;">${brandName}</strong>
+            </div>`;
+          });
+          brandsDiv.innerHTML = html;
+          
+          // Add click handlers to brand cards
+          document.querySelectorAll('.brandCard').forEach(card => {
+            card.addEventListener('click', () => {
+              const brand = card.getAttribute('data-brand');
+              showProductsByBrand(brand);
+            });
+          });
+        } else {
+          brandsDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">No brands available</div>';
+        }
+      }
+    }
+
+    // Show products filtered by brand
+    function showProductsByBrand(brandName) {
+      adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
+      const filteredProducts = adminProducts.filter(prod => prod.brand === brandName);
+      
+      if (filteredProducts.length === 0) {
+        alert(`No products available for ${brandName}`);
+        return;
+      }
+      
+      let html = '<div style="background:#1a1a1a;max-width:600px;margin:50px auto;border-radius:12px;padding:24px;color:#f6eec2;position:relative;z-index:1002;">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">';
+      html += `<h2 style="margin:0;">${brandName} Products</h2>`;
+      html += '<button id="closeBrandModal" type="button" style="background:transparent;border:1px solid #888;color:#f6eec2;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:16px;">✕ Close</button>';
+      html += '</div>';
+      
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">';
+      filteredProducts.forEach(prod => {
+        html += `<div style="background:#222;padding:12px;border-radius:6px;border:1px solid #444;text-align:center;cursor:pointer;">
+          <strong style="color:#f6eec2;">${prod.name}</strong><br>
+          <span style="font-size:12px;color:#999;">Rs.${prod.price}</span><br>
+          <span style="font-size:11px;color:#666;">Stock: ${prod.stock}</span>
+        </div>`;
+      });
+      html += '</div>';
+      html += '</div>';
+      
+      // Create overlay
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1001;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
+      overlay.innerHTML = html;
+      document.body.appendChild(overlay);
+      
+      document.getElementById('closeBrandModal').addEventListener('click', () => {
+        overlay.remove();
+      });
+      
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+      });
+    }
+
+    // Show products filtered by category
+    function showProductsByCategory(categoryId) {
+      adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
+      const filteredProducts = adminProducts.filter(prod => prod.category === categoryId);
+      
+      if (filteredProducts.length === 0) {
+        alert(`No products available in ${categoryId} category`);
+        return;
+      }
+      
+      // Get category display name
+      const categoryNames = {
+        'produce': 'Fresh Produce',
+        'dairy': 'Dairy & Eggs',
+        'bakery': 'Bakery',
+        'meat': 'Meat & Seafood',
+        'frozen': 'Frozen Foods',
+        'beverages': 'Beverages',
+        'pantry': 'Pantry & Staples',
+        'snacks': 'Snacks & Confectionery',
+        'household': 'Household & Cleaning',
+        'personal': 'Personal Care',
+        'baby': 'Baby & Kids',
+        'pet': 'Pet Supplies'
+      };
+      const categoryName = categoryNames[categoryId] || categoryId.charAt(0).toUpperCase() + categoryId.slice(1);
+      
+      let html = '<div style="background:#1a1a1a;max-width:600px;margin:50px auto;border-radius:12px;padding:24px;color:#f6eec2;position:relative;z-index:1002;">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">';
+      html += `<h2 style="margin:0;">${categoryName} Products</h2>`;
+      html += '<button id="closeCategoryModal" type="button" style="background:transparent;border:1px solid #888;color:#f6eec2;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:16px;">✕ Close</button>';
+      html += '</div>';
+      
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">';
+      filteredProducts.forEach(prod => {
+        html += `<div style="background:#222;padding:12px;border-radius:6px;border:1px solid #444;text-align:center;cursor:pointer;">
+          <strong style="color:#f6eec2;">${prod.name}</strong><br>
+          <span style="font-size:12px;color:#99cc99;">🏷️ ${prod.brand || 'Generic'}</span><br>
+          <span style="font-size:12px;color:#999;">Rs.${prod.price}</span><br>
+          <span style="font-size:11px;color:#666;">Stock: ${prod.stock}</span>
+        </div>`;
+      });
+      html += '</div>';
+      html += '</div>';
+      
+      // Create overlay
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1001;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
+      overlay.innerHTML = html;
+      document.body.appendChild(overlay);
+      
+      document.getElementById('closeCategoryModal').addEventListener('click', () => {
+        overlay.remove();
+      });
+      
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+      });
+    }
+
+
+    // Load and display admin products in products section
+    function loadAdminProducts() {
+      const productsDiv = document.getElementById('adminProductsList');
+      if (productsDiv) {
+        adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
+        if (adminProducts.length > 0) {
+          let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-top:12px;">';
+          adminProducts.forEach(prod => {
+            html += `<div style="background:#222;padding:12px;border-radius:6px;border:1px solid #444;text-align:center;">
+              <strong style="color:#f6eec2;">${prod.name}</strong><br>
+              <span style="font-size:11px;color:#f0e6b8;">Brand: ${prod.brand || 'N/A'}</span><br>
+              <span style="font-size:12px;color:#999;">Rs.${prod.price}</span><br>
+              <span style="font-size:11px;color:#666;">Stock: ${prod.stock}</span>
+            </div>`;
+          });
+          html += '</div>';
+          productsDiv.innerHTML = html;
+        }
+      }
+    }
+
+    // Quick pick button functionality
+    const quickPickBtn = document.getElementById('quickPickBtn');
+    if (quickPickBtn) {
+      quickPickBtn.addEventListener('click', () => {
+        showAdminProductsModal();
+      });
+    }
+
+    function showAdminProductsModal() {
+      adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
+      const adminBrands = JSON.parse(localStorage.getItem('adminBrands')) || [];
+      
+      if (adminProducts.length === 0) {
+        alert('No products available. Admin needs to add products first.');
+        return;
+      }
+
+      // Get unique categories
+      const categories = [...new Set(adminProducts.map(p => p.category).filter(c => c))];
+
+      let html = '<div style="background:#1a1a1a;max-width:1100px;margin:30px auto;border-radius:12px;padding:24px;color:#f6eec2;position:relative;z-index:1001;">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">';
+      html += '<h2 style="margin:0;font-size:28px;">🛒 Pick Your Items</h2>';
+      html += '<button id="closeProductsModal" style="background:transparent;border:1px solid #888;color:#f6eec2;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:18px;font-weight:bold;">✕</button>';
+      html += '</div>';
+
+      // Filter section
+      html += '<div style="background:#222;padding:16px;border-radius:8px;margin-bottom:20px;border:1px solid #444;">';
+      
+      // Search box
+      html += '<div style="margin-bottom:12px;">';
+      html += '<input id="productSearchInput" type="text" placeholder="🔍 Search items by name..." style="width:100%;padding:12px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;box-sizing:border-box;font-size:14px;">';
+      html += '</div>';
+
+      // Category chips
+      if (categories.length > 0) {
+        html += '<div style="margin-bottom:12px;">';
+        html += '<div style="font-size:12px;color:#999;margin-bottom:8px;font-weight:bold;">CATEGORIES</div>';
+        html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+        html += '<button id="categoryAll" class="category-chip active" data-category="" style="padding:8px 16px;border-radius:20px;border:2px solid #25d366;background:#25d366;color:#000;cursor:pointer;font-weight:bold;font-size:12px;transition:all 0.2s;">All Items</button>';
+        categories.forEach(cat => {
+          const catDisplay = cat.charAt(0).toUpperCase() + cat.slice(1);
+          html += `<button class="category-chip" data-category="${cat}" style="padding:8px 16px;border-radius:20px;border:2px solid #444;background:transparent;color:#f6eec2;cursor:pointer;font-weight:bold;font-size:12px;transition:all 0.2s;">${catDisplay}</button>`;
+        });
+        html += '</div>';
+        html += '</div>';
+      }
+
+      // Brand filter
+      if (adminBrands.length > 0) {
+        html += '<div style="margin-bottom:12px;">';
+        html += '<div style="font-size:12px;color:#999;margin-bottom:8px;font-weight:bold;">BRANDS</div>';
+        html += '<select id="brandFilter" style="width:100%;padding:10px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;box-sizing:border-box;font-size:13px;">';
+        html += '<option value="">🏷️ All Brands</option>';
+        adminBrands.forEach(brand => {
+          const brandName = typeof brand === 'string' ? brand : brand.name;
+          html += `<option value="${brandName}">${brandName}</option>`;
+        });
+        html += '</select>';
+        html += '</div>';
+      }
+      
+      html += '</div>';
+
+      // Products grid with enhanced styling
+      html += '<div id="adminProductsContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:16px;">';
+      
+      adminProducts.forEach((prod, idx) => {
+        const catEmoji = {
+          'produce': '🥬',
+          'dairy': '🥛',
+          'bakery': '🍞',
+          'meat': '🍖',
+          'pantry': '🥫',
+          'beverages': '🥤',
+          'snacks': '🍿'
+        };
+        const emoji = catEmoji[prod.category] || '📦';
+        
+        html += `<div class="product-card" data-idx="${idx}" data-name="${prod.name}" data-brand="${prod.brand || ''}" data-category="${prod.category || ''}" style="background:linear-gradient(135deg, #222 0%, #2a2a2a 100%);padding:16px;border-radius:10px;border:2px solid #444;text-align:center;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:8px;right:8px;font-size:24px;opacity:0.3;">${emoji}</div>
+          <h4 style="color:#f6eec2;margin:0 0 8px 0;font-size:15px;font-weight:bold;word-wrap:break-word;">${prod.name}</h4>
+          <div style="color:#999;font-size:11px;margin-bottom:6px;">📦 ${prod.category ? prod.category.charAt(0).toUpperCase() + prod.category.slice(1) : 'General'}</div>
+          <div style="color:#99cc99;font-size:11px;margin-bottom:10px;font-weight:bold;">🏷️ ${prod.brand || 'Generic'}</div>
+          <div style="background:#25d366;color:#000;padding:8px;border-radius:6px;margin-bottom:8px;font-weight:bold;font-size:16px;">Rs.${prod.price}</div>
+          <div style="color:#999;font-size:11px;margin-bottom:8px;">📊 Stock: ${prod.stock}</div>
+          <button class="add-to-order-btn" style="width:100%;padding:8px;background:#25d366;color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;transition:all 0.2s;">+ Add to Order</button>
+        </div>`;
+      });
+
+      html += '</div>';
+      html += '</div>';
+
+      // Create overlay
+      const overlay = document.createElement('div');
+      overlay.id = 'productsModalOverlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
+      overlay.innerHTML = html;
+      document.body.appendChild(overlay);
+
+      // Add hover effect to product cards
+      const productCards = document.querySelectorAll('.product-card');
+      productCards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+          card.style.background = 'linear-gradient(135deg, #333 0%, #3a3a3a 100%)';
+          card.style.borderColor = '#25d366';
+          card.style.transform = 'translateY(-8px)';
+          card.style.boxShadow = '0 8px 24px rgba(37, 211, 102, 0.2)';
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.background = 'linear-gradient(135deg, #222 0%, #2a2a2a 100%)';
+          card.style.borderColor = '#444';
+          card.style.transform = 'translateY(0)';
+          card.style.boxShadow = 'none';
+        });
+
+        const addBtn = card.querySelector('.add-to-order-btn');
+        addBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = parseInt(card.getAttribute('data-idx'));
+          showProductQuantityForm(adminProducts[idx], adminProducts, overlay);
+        });
+      });
+
+      // Category chip functionality
+      const categoryChips = document.querySelectorAll('.category-chip');
+      categoryChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          categoryChips.forEach(c => {
+            c.style.background = 'transparent';
+            c.style.borderColor = '#444';
+            c.style.color = '#f6eec2';
+          });
+          chip.style.background = '#25d366';
+          chip.style.borderColor = '#25d366';
+          chip.style.color = '#000';
+
+          const selectedCategory = chip.getAttribute('data-category');
+          const selectedBrand = document.getElementById('brandFilter') ? document.getElementById('brandFilter').value : '';
+          
+          productCards.forEach(card => {
+            const cardCategory = card.getAttribute('data-category');
+            const cardBrand = card.getAttribute('data-brand');
+            const matchesCategory = selectedCategory === '' || cardCategory === selectedCategory;
+            const matchesBrand = selectedBrand === '' || cardBrand === selectedBrand;
+            
+            if (matchesCategory && matchesBrand) {
+              card.style.display = 'block';
+            } else {
+              card.style.display = 'none';
+            }
+          });
+        });
+      });
+
+      // Close button
+      document.getElementById('closeProductsModal').addEventListener('click', () => {
+        overlay.remove();
+      });
+
+      // Brand filter functionality
+      const brandFilter = document.getElementById('brandFilter');
+      if (brandFilter) {
+        brandFilter.addEventListener('change', () => {
+          const selectedBrand = brandFilter.value;
+          const activeCategory = document.querySelector('.category-chip.active');
+          const selectedCategory = activeCategory ? activeCategory.getAttribute('data-category') : '';
+          
+          productCards.forEach(card => {
+            const cardBrand = card.getAttribute('data-brand');
+            const cardCategory = card.getAttribute('data-category');
+            const matchesBrand = selectedBrand === '' || cardBrand === selectedBrand;
+            const matchesCategory = selectedCategory === '' || cardCategory === selectedCategory;
+            
+            if (matchesBrand && matchesCategory) {
+              card.style.display = 'block';
+            } else {
+              card.style.display = 'none';
+            }
+          });
+        });
+      }
+
+      // Search functionality
+      const searchInput = document.getElementById('productSearchInput');
+      searchInput.addEventListener('input', () => {
+        const query = searchInput.value.toLowerCase();
+        const activeCategory = document.querySelector('.category-chip.active');
+        const selectedCategory = activeCategory ? activeCategory.getAttribute('data-category') : '';
+        const selectedBrand = brandFilter ? brandFilter.value : '';
+        
+        productCards.forEach(card => {
+          const name = card.getAttribute('data-name').toLowerCase();
+          const cardBrand = card.getAttribute('data-brand');
+          const cardCategory = card.getAttribute('data-category');
+          const matchesSearch = name.includes(query);
+          const matchesBrand = selectedBrand === '' || cardBrand === selectedBrand;
+          const matchesCategory = selectedCategory === '' || cardCategory === selectedCategory;
+          
+          if (matchesSearch && matchesBrand && matchesCategory) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+
+      // Close on overlay click
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+      });
+    }
+
+    function showProductQuantityForm(product, allProducts, overlay) {
+      const catEmoji = {
+        'produce': '🥬',
+        'dairy': '🥛',
+        'bakery': '🍞',
+        'meat': '🍖',
+        'pantry': '🥫',
+        'beverages': '🥤',
+        'snacks': '🍿'
+      };
+      const emoji = catEmoji[product.category] || '📦';
+
+      let html = '<div style="background:linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);max-width:500px;margin:50px auto;border-radius:16px;padding:28px;color:#f6eec2;position:relative;z-index:1002;border:2px solid #25d366;box-shadow:0 0 40px rgba(37, 211, 102, 0.2);">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">';
+      html += `<h2 style="margin:0;font-size:24px;display:flex;align-items:center;gap:8px;"><span>${emoji}</span> Add to Order</h2>`;
+      html += '<button id="closeQuantityForm" style="background:transparent;border:none;color:#f6eec2;padding:6px 12px;cursor:pointer;font-size:24px;font-weight:bold;">✕</button>';
+      html += '</div>';
+
+      html += '<div style="background:rgba(255,255,255,0.05);padding:18px;border-radius:12px;margin-bottom:24px;border:1px solid #25d366;border-left:4px solid #25d366;">';
+      html += `<h3 style="color:#f6eec2;margin:0 0 12px 0;font-size:20px;">${product.name}</h3>`;
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
+      html += `<div><span style="color:#999;font-size:11px;text-transform:uppercase;font-weight:bold;">Category</span><br><span style="color:#25d366;font-size:14px;font-weight:bold;">${emoji} ${product.category ? product.category.charAt(0).toUpperCase() + product.category.slice(1) : 'General'}</span></div>`;
+      html += `<div><span style="color:#999;font-size:11px;text-transform:uppercase;font-weight:bold;">Brand</span><br><span style="color:#f0e6b8;font-size:14px;font-weight:bold;">🏷️ ${product.brand || 'Generic'}</span></div>`;
+      html += `<div><span style="color:#999;font-size:11px;text-transform:uppercase;font-weight:bold;">Unit Price</span><br><span style="color:#25d366;font-size:16px;font-weight:bold;">Rs.${product.price}</span></div>`;
+      html += `<div><span style="color:#999;font-size:11px;text-transform:uppercase;font-weight:bold;">In Stock</span><br><span style="color:#f0e6b8;font-size:14px;font-weight:bold;">📊 ${product.stock}</span></div>`;
+      html += '</div>';
+      html += '</div>';
+
+      html += '<label style="display:block;margin-bottom:20px;color:#f6eec2;">';
+      html += '<span style="display:block;margin-bottom:12px;font-size:14px;font-weight:bold;text-transform:uppercase;color:#999;">Select Quantity</span>';
+      html += '<div style="display:flex;align-items:center;gap:12px;background:#222;padding:16px;border-radius:10px;border:2px solid #444;">';
+      html += '<button id="decreaseQty" style="width:48px;height:48px;background:linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:24px;font-weight:bold;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">−</button>';
+      html += `<input id="quantityInput" type="number" min="1" max="${product.stock}" value="1" style="flex:1;padding:12px;border-radius:8px;border:1px solid #444;background:#111;color:#f6eec2;font-size:20px;font-weight:bold;text-align:center;box-sizing:border-box;">`;
+      html += '<button id="increaseQty" style="width:48px;height:48px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:24px;font-weight:bold;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">+</button>';
+      html += '</div>';
+      html += '</label>';
+
+      html += `<div id="totalPrice" style="background:linear-gradient(135deg, #25d366 0%, #20b854 100%);padding:16px;border-radius:10px;margin-bottom:20px;text-align:center;color:#000;font-size:20px;font-weight:bold;">💰 Total: Rs.${product.price}</div>`;
+      html += `<button id="addToOrderBtn" style="width:100%;padding:14px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:16px;margin-bottom:12px;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.5px;">✓ Add to Order</button>`;
+      html += `<button id="backToProductsBtn" style="width:100%;padding:14px;background:#444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:14px;transition:all 0.2s;">← Back to Products</button>`;
+      html += '</div>';
+
+      // Create form overlay
+      const formOverlay = document.createElement('div');
+      formOverlay.id = 'quantityFormOverlay';
+      formOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1001;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
+      formOverlay.innerHTML = html;
+      document.body.appendChild(formOverlay);
+
+      // Add button hover effects
+      const addBtn = document.getElementById('addToOrderBtn');
+      const backBtn = document.getElementById('backToProductsBtn');
+      const decreaseBtn = document.getElementById('decreaseQty');
+      const increaseBtn = document.getElementById('increaseQty');
+
+      [addBtn, backBtn, decreaseBtn, increaseBtn].forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+          btn.style.transform = 'translateY(-2px)';
+          btn.style.boxShadow = '0 8px 16px rgba(0,0,0,0.3)';
+        });
+        btn.addEventListener('mouseleave', () => {
+          btn.style.transform = 'translateY(0)';
+          btn.style.boxShadow = 'none';
+        });
+      });
+
+      // Close quantity form
+      document.getElementById('closeQuantityForm').addEventListener('click', () => {
+        formOverlay.remove();
+      });
+
+      // Increment quantity
+      document.getElementById('increaseQty').addEventListener('click', () => {
+        const input = document.getElementById('quantityInput');
+        const currentQty = parseInt(input.value) || 1;
+        if (currentQty < product.stock) {
+          input.value = currentQty + 1;
+          updateTotalPrice();
+        }
+      });
+
+      // Decrement quantity
+      document.getElementById('decreaseQty').addEventListener('click', () => {
+        const input = document.getElementById('quantityInput');
+        const currentQty = parseInt(input.value) || 1;
+        if (currentQty > 1) {
+          input.value = currentQty - 1;
+          updateTotalPrice();
+        }
+      });
+
+      // Update total price on input change
+      document.getElementById('quantityInput').addEventListener('input', () => {
+        updateTotalPrice();
+      });
+
+      // Function to update total price
+      function updateTotalPrice() {
+        const qty = parseInt(document.getElementById('quantityInput').value) || 1;
+        const total = product.price * qty;
+        document.getElementById('totalPrice').textContent = `💰 Total: Rs.${total}`;
+      }
+
+      // Back to products
+      document.getElementById('backToProductsBtn').addEventListener('click', () => {
+        formOverlay.remove();
+      });
+
+      // Add to order
+      document.getElementById('addToOrderBtn').addEventListener('click', () => {
+        const qty = parseInt(document.getElementById('quantityInput').value) || 1;
+        
+        if (qty > product.stock) {
+          alert(`Only ${product.stock} items available in stock`);
+          return;
+        }
+
+        const orderTextarea = document.querySelector('textarea[name="order"]');
+        const itemText = `${product.name} x ${qty} (Rs. ${product.price})\n`;
+        orderTextarea.value = (orderTextarea.value.trim() ? orderTextarea.value + '\n' : '') + itemText;
+        
+        // Close both overlays and show order
+        formOverlay.remove();
+        overlay.remove();
+        orderTextarea.scrollIntoView({behavior:'smooth'});
+      });
+
+      // Close on overlay click
+      formOverlay.addEventListener('click', (e) => {
+        if (e.target === formOverlay) formOverlay.remove();
+      });
+    }
+
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadAdminProducts();
+      loadAdminBrands();
+      
+      // See Products button - open full product modal
+      const seeProductsBtn = document.getElementById('seeProductsBtn');
+      if (seeProductsBtn) {
+        seeProductsBtn.addEventListener('click', () => {
+          showAdminProductsModal();
+        });
+      }
+
+      // Buy Now Pay Later button handler
+      const bnplSubmitBtn = document.getElementById('bnplSubmitBtn');
+      if (bnplSubmitBtn) {
+        bnplSubmitBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // Create application form modal
+          let html = '<div style="background:#1a1a1a;max-width:500px;margin:50px auto;border-radius:12px;padding:24px;color:#f6eec2;position:relative;z-index:1002;">';
+          html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">';
+          html += '<h2 style="margin:0;">Buy Now Pay Later Application</h2>';
+          html += '<button id="closeFormModal" type="button" style="background:transparent;border:1px solid #888;color:#f6eec2;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:16px;">✕ Close</button>';
+          html += '</div>';
+          
+          html += '<form id="bnplModalForm" style="display:flex;flex-direction:column;gap:12px;">';
+          html += '<input type="text" id="modalFullName" placeholder="Full Name" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">';
+          html += '<input type="text" id="modalNic" placeholder="NIC Number" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">';
+          html += '<input type="tel" id="modalPhone" placeholder="Phone Number" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">';
+          html += '<input type="text" id="modalAddress" placeholder="Address" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">';
+          html += '<input type="text" id="modalCity" placeholder="City" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">';
+          html += '<input type="number" id="modalInstallments" placeholder="Period (1-30 Days)" min="1" max="30" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;">';
+          
+          html += '<div style="background:#222;padding:12px;border-radius:6px;">';
+          html += '<label style="display:flex;align-items:flex-start;gap:10px;color:#f6eec2;cursor:pointer;">';
+          html += '<input type="checkbox" id="modalAgreement" required style="margin-top:4px;cursor:pointer;">';
+          html += '<span style="font-size:12px;">I agree to share my personal information and understand the <strong>Privacy Policy</strong>. My data will be used only for processing my Buy Now Pay Later application and I consent to being contacted regarding my application.</span>';
+          html += '</label>';
+          html += '</div>';
+          
+          html += '<button id="submitFormBtn" type="button" style="padding:10px 0;border-radius:6px;background:#f6eec2;color:#222;font-weight:bold;border:none;cursor:pointer;">Submit Application</button>';
+          html += '</form>';
+          html += '</div>';
+          
+          // Create overlay
+          const overlay = document.createElement('div');
+          overlay.id = 'bnplFormOverlay';
+          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1001;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
+          overlay.innerHTML = html;
+          document.body.appendChild(overlay);
+          
+          // Close modal
+          document.getElementById('closeFormModal').addEventListener('click', () => {
+            overlay.remove();
+          });
+          
+          // Submit form
+          document.getElementById('submitFormBtn').addEventListener('click', () => {
+            const fullName = document.getElementById('modalFullName').value;
+            const nic = document.getElementById('modalNic').value;
+            const phone = document.getElementById('modalPhone').value;
+            const address = document.getElementById('modalAddress').value;
+            const city = document.getElementById('modalCity').value;
+            const installments = document.getElementById('modalInstallments').value;
+            const agreementChecked = document.getElementById('modalAgreement').checked;
+            
+            if (!fullName || !nic || !phone || !address || !city || !installments) {
+              alert('Please fill in all required fields');
+              return;
+            }
+            
+            if (!agreementChecked) {
+              alert('Please agree to the Privacy Policy and terms to proceed');
+              return;
+            }
+            
+            // Create confirmation modal
+            let confirmHtml = '<div style="background:#1a1a1a;max-width:500px;margin:50px auto;border-radius:12px;padding:24px;color:#f6eec2;position:relative;z-index:1002;">';
+            confirmHtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">';
+            confirmHtml += '<h2 style="margin:0;">Confirm Your Application</h2>';
+            confirmHtml += '<button id="closeConfirmModal" type="button" style="background:transparent;border:1px solid #888;color:#f6eec2;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:16px;">✕ Close</button>';
+            confirmHtml += '</div>';
+            
+            confirmHtml += '<div style="background:#222;padding:16px;border-radius:8px;margin-bottom:20px;">';
+            confirmHtml += '<p style="margin:0 0 12px;color:#f0e6b8;"><strong>Application Details:</strong></p>';
+            confirmHtml += `<p style="margin:6px 0;"><strong>Name:</strong> ${fullName}</p>`;
+            confirmHtml += `<p style="margin:6px 0;"><strong>NIC:</strong> ${nic}</p>`;
+            confirmHtml += `<p style="margin:6px 0;"><strong>Phone:</strong> ${phone}</p>`;
+            confirmHtml += `<p style="margin:6px 0;"><strong>Address:</strong> ${address}</p>`;
+            confirmHtml += `<p style="margin:6px 0;"><strong>City:</strong> ${city}</p>`;
+            confirmHtml += `<p style="margin:6px 0;"><strong>Payment Period:</strong> ${installments} Days</p>`;
+            confirmHtml += '</div>';
+            
+            confirmHtml += '<p style="color:#999;font-size:12px;margin-bottom:16px;">Your information will be sent securely. Our team will contact you within 24 hours.</p>';
+            confirmHtml += '<button id="confirmApplyBtn" type="button" style="width:100%;padding:12px;background:#25d366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;margin-bottom:10px;">Confirm & Send</button>';
+            confirmHtml += '<button id="cancelApplyBtn" type="button" style="width:100%;padding:12px;background:#666;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">Cancel</button>';
+            confirmHtml += '</div>';
+            
+            // Create confirmation overlay
+            const confirmOverlay = document.createElement('div');
+            confirmOverlay.id = 'bnplConfirmOverlay';
+            confirmOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1002;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
+            confirmOverlay.innerHTML = confirmHtml;
+            document.body.appendChild(confirmOverlay);
+            
+            // Close confirmation modal
+            document.getElementById('closeConfirmModal').addEventListener('click', () => {
+              confirmOverlay.remove();
+            });
+            
+            document.getElementById('cancelApplyBtn').addEventListener('click', () => {
+              confirmOverlay.remove();
+            });
+            
+            // Confirm and send
+            document.getElementById('confirmApplyBtn').addEventListener('click', () => {
+              // WhatsApp message for BNPL application
+              const msg = encodeURIComponent(
+                `------ BUY NOW PAY LATER APPLICATION ------\n` +
+                `Full Name: ${fullName}\n` +
+                `NIC Number: ${nic}\n` +
+                `Phone: ${phone}\n` +
+                `Address: ${address}\n` +
+                `City: ${city}\n` +
+                `Installment Period: ${installments} Days\n` +
+                `Agreement Accepted: Yes\n` +
+                `-------------------------`
+              );
+              // WhatsApp number
+              const whatsappNumber = '94743490830';
+              // Open WhatsApp in new tab
+              window.open(`https://wa.me/${whatsappNumber}?text=${msg}`, '_blank');
+              
+              // Close modals
+              confirmOverlay.remove();
+              overlay.remove();
+            });
+          });
+        });
+      }
+    });
+
+    // Form submission handler
+    const orderForm = document.querySelector('#order form');
+    if (orderForm) {
+      orderForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        // Gather form data
+        const form = e.target;
+        const name = form.name.value;
+        const phone = form.phone.value;
+        const address = form.address.value;
+        const city = form.city.value;
+        const day = form.day.value;
+        const month = form.month.value;
+        const order = form.order.value;
+        // WhatsApp message text
+        const msg = encodeURIComponent(
+          `------ ONLINE ORDER ------\n` +
+          `Name: ${name}\n` +
+          `Phone: ${phone}\n` +
+          `Address: ${address}\n` +
+          `City: ${city}\n` +
+          `Date: ${day}/${month}\n` +
+          `Order:\n${order}\n` +
+          `-------------------------`
+        );
+        // WhatsApp number
+        const whatsappNumber = '94743490830';
+        // Open WhatsApp in new tab
+        window.open(`https://wa.me/${whatsappNumber}?text=${msg}`, '_blank');
+        
+        // Store order in history
+        let orderHistory = JSON.parse(localStorage.getItem('orderHistory')) || [];
+        orderHistory.push({
+          name,
+          phone,
+          address,
+          city,
+          day,
+          month,
+          order,
+          date: new Date().toLocaleString(),
+          timestamp: Date.now()
+        });
+        localStorage.setItem('orderHistory', JSON.stringify(orderHistory));
+        
+        // Clear form
+        form.reset();
+      });
+    }
+
+    // I need it now button handler
+    const needNowBtn = document.getElementById('needNowBtn');
+    if (needNowBtn) {
+      needNowBtn.addEventListener('click', function() {
+        // Get current date and month automatically
+        const today = new Date();
+        const currentDay = today.getDate();
+        const currentMonth = today.getMonth() + 1; // Month is 0-indexed
+        
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const currentMonthName = monthNames[currentMonth - 1];
+        
+        // Create modal to select/confirm date
+        let html = '<div style="background:#1a1a1a;max-width:400px;margin:50px auto;border-radius:12px;padding:24px;color:#f6eec2;position:relative;z-index:1002;">';
+        html += '<h3 style="margin-top:0;color:#f6eec2;">Select Date for Order</h3>';
+        html += '<p style="color:#999;margin-bottom:16px;">Current date and month are pre-filled</p>';
+        
+        html += '<div style="background:#222;padding:16px;border-radius:8px;margin-bottom:20px;">';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
+        html += `<div><label style="display:block;margin-bottom:8px;color:#f6eec2;font-size:12px;">Day</label><input id="modalDay" type="number" min="1" max="31" value="${currentDay}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;box-sizing:border-box;"></div>`;
+        html += `<div><label style="display:block;margin-bottom:8px;color:#f6eec2;font-size:12px;">Month</label><select id="modalMonth" style="width:100%;padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;box-sizing:border-box;">`;
+        monthNames.forEach((name, idx) => {
+          const selected = (idx + 1) === currentMonth ? 'selected' : '';
+          html += `<option value="${idx + 1}" ${selected}>${name}</option>`;
+        });
+        html += '</select></div>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '<button id="confirmDateBtn" style="width:100%;padding:10px;background:#25d366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;margin-bottom:10px;">Confirm Date</button>';
+        html += '<button id="closeDateModalBtn" style="width:100%;padding:10px;background:#666;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">Cancel</button>';
+        html += '</div>';
+        
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'dateModalOverlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1001;display:flex;align-items:center;justify-content:center;padding:20px;';
+        overlay.innerHTML = html;
+        document.body.appendChild(overlay);
+        
+        // Close modal
+        document.getElementById('closeDateModalBtn').addEventListener('click', () => {
+          overlay.remove();
+        });
+        
+        // Confirm date and populate form
+        document.getElementById('confirmDateBtn').addEventListener('click', () => {
+          const selectedDay = document.getElementById('modalDay').value;
+          const selectedMonth = document.getElementById('modalMonth').value;
+          
+          if (!selectedDay || !selectedMonth) {
+            alert('Please enter valid day and month');
+            return;
+          }
+          
+          // Populate form fields
+          const form = document.querySelector('#order form');
+          form.day.value = selectedDay;
+          form.month.value = selectedMonth;
+          
+          // Close modal
+          overlay.remove();
+          
+          // Focus on order items
+          form.order.focus();
+        });
+      });
+    }
+
+    // Buy Now Pay Later button handler
+    const bnplSubmitBtn = document.getElementById('bnplSubmitBtn');
+    if (bnplSubmitBtn) {
+      bnplSubmitBtn.addEventListener('click', function() {
+        const form = this.closest('form');
+        const fullName = form.fullName.value;
+        const nic = form.nic.value;
+        const phone = form.phone.value;
+        const address = form.address.value;
+        const city = form.city.value;
+        const installments = form.installments.value;
+        const agreementChecked = document.getElementById('bnplAgreement').checked;
+        
+        if (!fullName || !nic || !phone || !address || !city || !installments) {
+          alert('Please fill in all required fields');
+          return;
+        }
+        
+        if (!agreementChecked) {
+          alert('Please agree to the Privacy Policy and terms to proceed');
+          return;
+        }
+        
+        // Create confirmation modal
+        let html = '<div style="background:#1a1a1a;max-width:500px;margin:50px auto;border-radius:12px;padding:24px;color:#f6eec2;position:relative;z-index:1002;">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">';
+        html += '<h2 style="margin:0;">Confirm Your Application</h2>';
+        html += '<button id="closeConfirmModal" style="background:transparent;border:1px solid #888;color:#f6eec2;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:16px;">✕ Close</button>';
+        html += '</div>';
+        
+        html += '<div style="background:#222;padding:16px;border-radius:8px;margin-bottom:20px;">';
+        html += '<p style="margin:0 0 12px;color:#f0e6b8;"><strong>Application Details:</strong></p>';
+        html += `<p style="margin:6px 0;"><strong>Name:</strong> ${fullName}</p>`;
+        html += `<p style="margin:6px 0;"><strong>NIC:</strong> ${nic}</p>`;
+        html += `<p style="margin:6px 0;"><strong>Phone:</strong> ${phone}</p>`;
+        html += `<p style="margin:6px 0;"><strong>Address:</strong> ${address}</p>`;
+        html += `<p style="margin:6px 0;"><strong>City:</strong> ${city}</p>`;
+        html += `<p style="margin:6px 0;"><strong>Payment Period:</strong> ${installments} Days</p>`;
+        html += '</div>';
+        
+        html += '<p style="color:#999;font-size:12px;margin-bottom:16px;">Your information will be sent securely. Our team will contact you within 24 hours.</p>';
+        html += '<button id="confirmApplyBtn" style="width:100%;padding:12px;background:#25d366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;margin-bottom:10px;">Confirm & Send</button>';
+        html += '<button id="cancelApplyBtn" style="width:100%;padding:12px;background:#666;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">Cancel</button>';
+        html += '</div>';
+        
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'bnplConfirmOverlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1001;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
+        overlay.innerHTML = html;
+        document.body.appendChild(overlay);
+        
+        // Close modal
+        document.getElementById('closeConfirmModal').addEventListener('click', () => {
+          overlay.remove();
+        });
+        
+        document.getElementById('cancelApplyBtn').addEventListener('click', () => {
+          overlay.remove();
+        });
+        
+        // Confirm and send
+        document.getElementById('confirmApplyBtn').addEventListener('click', () => {
+          // WhatsApp message for BNPL application
+          const msg = encodeURIComponent(
+            `------ BUY NOW PAY LATER APPLICATION ------\n` +
+            `Full Name: ${fullName}\n` +
+            `NIC Number: ${nic}\n` +
+            `Phone: ${phone}\n` +
+            `Address: ${address}\n` +
+            `City: ${city}\n` +
+            `Installment Period: ${installments} Days\n` +
+            `Agreement Accepted: Yes\n` +
+            `-------------------------`
+          );
+          // WhatsApp number
+          const whatsappNumber = '94743490830';
+          // Open WhatsApp in new tab
+          window.open(`https://wa.me/${whatsappNumber}?text=${msg}`, '_blank');
+          
+          // Store BNPL application in history
+          let bnplHistory = JSON.parse(localStorage.getItem('bnplHistory')) || [];
+          bnplHistory.push({
+            fullName,
+            nic,
+            phone,
+            address,
+            city,
+            installments,
+            date: new Date().toLocaleString(),
+            timestamp: Date.now()
+          });
+          localStorage.setItem('bnplHistory', JSON.stringify(bnplHistory));
+          
+          // Close modal
+          overlay.remove();
+        });
+      });
+    }
+  </script>
+
+  <section id="categories" style="padding:24px 18px; max-width:1000px;margin:24px auto;color:#e6dfb0;">
+    <h3>Supermarket Categories</h3>
+    <p>Click a category image to view example items.</p>
+
+    <style>
+      .cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:18px;margin-top:14px}
+      .cat-card{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;text-align:center;cursor:pointer;transition:transform .12s,box-shadow .12s}
+      .cat-card:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,0.6)}
+      .cat-card img{width:100%;height:140px;object-fit:cover;border-radius:6px;background:#111;min-width:160px;}
+      .cat-card h5{margin:8px 0 0;color:#f6eec2;font-size:14px}
+      .cat-items{max-width:800px;margin:18px auto;padding:16px;background:rgba(255,255,255,0.02);border-radius:8px;color:#fff}
+      .cat-items ul{list-style:disc;margin-left:20px;color:#e6dfb0}
+      .close-btn{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#f6eec2;padding:6px 8px;border-radius:6px;cursor:pointer;float:right}
+    </style>
+
+    <div class="cat-grid" id="catGrid">
+      <!-- cards populated by JS -->
+    </div>
+
+    <div id="category-items" class="cat-items" style="display:none;">
+      <button id="closeCat" class="close-btn">Close</button>
+      <h4 id="catTitle"></h4>
+      <ul id="catList"></ul>
+    </div>
+  </section>
+
+  <script>
+    (function(){
+      const categories = [
+        {id:'produce', title:'Fresh Produce', folder:'produce', items:['Apples','Bananas','Tomatoes','Carrots','Spinach']},
+        {id:'dairy', title:'Dairy & Eggs', folder:'dairy', items:['Milk','Cheese','Yogurt','Butter','Eggs']},
+        {id:'bakery', title:'Bakery', folder:'bakery', items:['Bread','Buns','Croissants','Cake']},
+        {id:'meat', title:'Meat & Seafood', folder:'meat', items:['Chicken','Beef','Pork','Salmon','Tuna']},
+        {id:'frozen', title:'Frozen Foods', folder:'frozen', items:['Ice Cream','Frozen Peas','Frozen Pizza']},
+        {id:'beverages', title:'Beverages', folder:'beverages', items:['Water','Juice','Coffee','Tea','Soda']},
+        {id:'pantry', title:'Pantry & Staples', folder:'pantry and staples', items:['Rice','Pasta','Canned Beans','Flour','Sugar']},
+        {id:'snacks', title:'Snacks & Confectionery', folder:'chocolate', items:['Chips','Chocolate','Biscuits']},
+        {id:'household', title:'Household & Cleaning', folder:'household', items:['Detergent','Dish Soap','Toilet Paper']},
+        {id:'personal', title:'Personal Care', folder:'personal', items:['Shampoo','Toothpaste','Soap']},
+        {id:'baby', title:'Baby & Kids', folder:'baby', items:['Diapers','Baby Food','Wipes']},
+        {id:'pet', title:'Pet Supplies', folder:'pet', items:['Dog Food','Cat Food','Treats']}
+      ];
+
+      const grid = document.getElementById('catGrid');
+      const itemsPanel = document.getElementById('category-items');
+      const catTitle = document.getElementById('catTitle');
+      const catList = document.getElementById('catList');
+      const closeBtn = document.getElementById('closeCat');
+
+      function placeholderSVG(title){
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='400'><rect width='100%' height='100%' fill='#222'/><text x='50%' y='50%' fill='#aaa' font-size='18' font-family='Arial' text-anchor='middle' dominant-baseline='middle'>${title}</text></svg>`;
+        return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+      }
+
+      categories.forEach(cat => {
+        const card = document.createElement('div');
+        card.className = 'cat-card';
+
+        const imgEl = document.createElement('img');
+        imgEl.alt = cat.title;
+
+        // Try to load custom image from localStorage first
+        const customImg = localStorage.getItem('catimg_' + cat.id);
+        if (customImg) {
+          imgEl.src = customImg;
+        } else {
+          // Fallback images
+          const fallbackImages = {
+            'bakery': 'images/bakery 3.jpg',
+            'dairy': 'images/dairy1.jpg',
+            'meat': 'images/meat 2.jpg',
+            'pantry': 'images/pantry1.jpg',
+            'snacks': 'images/snack1.jpeg',
+            'frozen': 'images/360_F_429147814_0RLI4EL9SRKOUAhhJXLs7MKKuDhEjZqZ.jpg',
+            'household': 'images/cleaning1.jpg',
+            'beverages': 'images/beverage 1.webp',
+            'produce': 'images/produce.jpg',
+            'personal': 'images/Personal_Care.jpg',
+            'baby': 'images/360_F_429147814_0RLI4EL9SRKOUAhhJXLs7MKKuDhEjZqZ.jpg',
+            'pet': 'images/360_F_429147814_0RLI4EL9SRKOUAhhJXLs7MKKuDhEjZqZ.jpg'
+          };
+          
+          imgEl.src = fallbackImages[cat.id] || `images/${cat.id}.jpg`;
+          imgEl.onerror = function() {
+            imgEl.onerror = null;
+            imgEl.src = placeholderSVG(cat.title);
+          };
+        }
+
+        // Add file input for custom image
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.style.display = 'block';
+        fileInput.style.margin = '6px auto 0';
+        fileInput.style.fontSize = '12px';
+        fileInput.title = 'Set image for ' + cat.title;
+        fileInput.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+              imgEl.src = evt.target.result;
+              localStorage.setItem('catimg_' + cat.id, evt.target.result);
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+        const titleEl = document.createElement('h5');
+        titleEl.textContent = cat.title;
+
+        card.appendChild(imgEl);
+        card.appendChild(titleEl);
+        card.addEventListener('click', ()=>{ showProductsByCategory(cat.id); });
+        grid.appendChild(card);
+      });
+
+      function showCategory(cat){
+        catTitle.textContent = cat.title;
+        catList.innerHTML = '';
+        cat.items.forEach(item=>{
+          const li = document.createElement('li');
+          li.textContent = item;
+          catList.appendChild(li);
+        });
+        itemsPanel.style.display = 'block';
+        itemsPanel.scrollIntoView({behavior:'smooth'});
+      }
+
+      closeBtn.addEventListener('click', ()=>{ itemsPanel.style.display='none'; });
+    })();
+
+    // Hamburger Menu Navigation
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOMContentLoaded: Initializing menu...');
+      
+      const hamburgerBtn = document.getElementById('hamburgerBtn');
+      const floatingMenuBtn = document.getElementById('floatingMenuBtn');
+      const closeNavBtn = document.getElementById('closeNav');
+      const siteNav = document.getElementById('siteNav');
+      const navOverlay = document.getElementById('navOverlay');
+      const menuLinks = document.querySelectorAll('.menu a');
+
+      console.log('Menu elements:', {
+        hamburgerBtn: !!hamburgerBtn,
+        floatingMenuBtn: !!floatingMenuBtn,
+        closeNavBtn: !!closeNavBtn,
+        siteNav: !!siteNav,
+        navOverlay: !!navOverlay,
+        menuLinksCount: menuLinks.length
+      });
+
+      function openMenu() {
+        console.log('Opening menu...');
+        siteNav.classList.remove('active');
+        navOverlay.classList.remove('active');
+      }
+
+      function closeMenu() {
+        console.log('Closing menu...');
+        siteNav.classList.remove('active');
+        navOverlay.classList.remove('active');
+        const leftMenuBar = document.getElementById('leftMenuBar');
+        if (leftMenuBar) {
+          leftMenuBar.classList.remove('active');
+        }
+      }
+
+      // Hamburger button
+      if (hamburgerBtn) {
+        hamburgerBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const leftMenuBar = document.getElementById('leftMenuBar');
+          if (leftMenuBar) {
+            leftMenuBar.classList.toggle('active');
+          }
+        });
+        console.log('Hamburger button listener added');
+      }
+
+      // Close button
+      if (closeNavBtn) {
+        closeNavBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          closeMenu();
+        });
+        console.log('Close button listener added');
+      }
+
+      // Overlay click
+      if (navOverlay) {
+        navOverlay.addEventListener('click', function(e) {
+          e.preventDefault();
+          closeMenu();
+        });
+        console.log('Overlay click listener added');
+      }
+
+      // Menu links
+      menuLinks.forEach((link, index) => {
+        link.addEventListener('click', function() {
+          console.log('Menu link clicked:', index);
+          closeMenu();
+        });
+      });
+      console.log('All menu link listeners added');
+    });
+
+    // Floating Sidebar Navigation - Wait for DOM to be ready
+    document.addEventListener('DOMContentLoaded', function() {
+      const scrollTopBtn = document.getElementById('scrollTopBtn');
+      const scrollDownBtn = document.getElementById('scrollDownBtn');
+      const toggleCategoriesBtn = document.getElementById('toggleCategoriesBtn');
+      const categoriesPanel = document.getElementById('categoriesPanel');
+      const contactFloatBtn = document.getElementById('contactFloatBtn');
+      const categoryQuickBtns = document.querySelectorAll('.category-quick-btn');
+
+      // Show/hide scroll to top button based on scroll position
+      if (scrollTopBtn) {
+        window.addEventListener('scroll', () => {
+          if (window.pageYOffset > 300) {
+            scrollTopBtn.style.display = 'block';
+          } else {
+            scrollTopBtn.style.display = 'none';
+          }
+        });
+
+        // Scroll to top
+        scrollTopBtn.addEventListener('click', () => {
+          window.scrollTo({top: 0, behavior: 'smooth'});
+        });
+      }
+
+      // Scroll down
+      if (scrollDownBtn) {
+        scrollDownBtn.addEventListener('click', () => {
+          window.scrollBy({top: window.innerHeight, behavior: 'smooth'});
+        });
+      }
+
+      // Toggle categories panel
+      if (toggleCategoriesBtn && categoriesPanel) {
+        toggleCategoriesBtn.addEventListener('click', () => {
+          console.log('Categories button clicked');
+          if (categoriesPanel.style.display === 'none' || categoriesPanel.style.display === '') {
+            categoriesPanel.style.display = 'block';
+            toggleCategoriesBtn.style.background = '#20b854';
+          } else {
+            categoriesPanel.style.display = 'none';
+            toggleCategoriesBtn.style.background = '#25d366';
+          }
+        });
+      }
+
+      // Quick jump to sections
+      if (categoryQuickBtns.length > 0) {
+        categoryQuickBtns.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-target');
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+              targetElement.scrollIntoView({behavior: 'smooth'});
+              if (categoriesPanel) {
+                categoriesPanel.style.display = 'none';
+              }
+              if (toggleCategoriesBtn) {
+                toggleCategoriesBtn.style.background = '#25d366';
+              }
+            }
+          });
+        });
+      }
+
+      // Contact button - scroll to contact section
+      contactFloatBtn.addEventListener('click', () => {
+        const contactSection = document.getElementById('contact');
+        if (contactSection) {
+          contactSection.scrollIntoView({behavior: 'smooth'});
+        }
+      });
+
+      // Keyboard shortcuts for contact section
+      document.addEventListener('keydown', (event) => {
+        // Only trigger if not typing in input/textarea
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+          return;
+        }
+
+        const key = event.key.toLowerCase();
+        
+        if (key === 'p') {
+          // Press P to call primary number
+          event.preventDefault();
+          window.location.href = 'tel:+94743490830';
+        } else if (key === 's') {
+          // Press S to call secondary number
+          event.preventDefault();
+          window.location.href = 'tel:+94770172009';
+        } else if (key === 'e') {
+          // Press E to email
+          event.preventDefault();
+          window.location.href = 'mailto:anuththaratraders@gmail.com';
+        } else if (key === 'w') {
+          // Press W to WhatsApp
+          event.preventDefault();
+          window.open('https://wa.me/94743490830?text=Hello%20Anuththara%20Traders', '_blank');
+        }
+      });
+    });
+  </script>
+
+  <section id="products" style="padding:36px 18px; max-width:900px;margin:24px auto;color:#e6dfb0;">
+    <h3>Products</h3>
+    <p>We stock fresh produce, dairy, bakery items, pantry staples and more.</p>
+    <button id="seeProductsBtn" style="padding:10px 20px;background:#25d366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;margin-bottom:16px;">See Products</button>
+    <div id="adminProductsList" style="margin-top:16px;display:none;"></div>
+  </section>
+
+  <section id="brands" style="padding:36px 18px; max-width:900px;margin:24px auto;color:#e6dfb0;">
+    <h3>Brands</h3>
+    <p>We partner with trusted brands to bring you quality products.</p>
+    <div id="adminBrandsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-top:20px;"></div>
+  </section>
+
+  <section id="services" style="padding:12px 8px; max-width:900px;margin:10px auto;color:#e6dfb0;">
+    <h2 style="text-align:center;margin-bottom:10px;font-size:18px;color:#f0e6b8;">🌟 Our Services</h2>
+    <p style="text-align:center;margin-bottom:12px;color:#d0c6a0;font-size:12px;">Quality, convenience & reliability.</p>
+    
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:12px;">
+      <div style="background:linear-gradient(135deg, rgba(37,211,102,0.15) 0%, rgba(37,211,102,0.05) 100%);border:1px solid #25d366;padding:10px;border-radius:8px;text-align:center;transition:all 0.3s;border-left:2px solid #25d366;box-shadow:0 2px 8px rgba(37, 211, 102, 0.1);">
+        <div style="font-size:24px;margin-bottom:4px;">🚀</div>
+        <h4 style="color:#25d366;margin:4px 0;font-size:13px;font-weight:bold;">Fast Delivery</h4>
+        <p style="color:#d0c6a0;font-size:11px;margin:0;line-height:1.3;">Orders within 24 hours. Mon-Sun, 8AM-8PM.</p>
+      </div>
+      
+      <div style="background:linear-gradient(135deg, rgba(102,126,234,0.15) 0%, rgba(102,126,234,0.05) 100%);border:1px solid #667eea;padding:10px;border-radius:8px;text-align:center;transition:all 0.3s;border-left:2px solid #667eea;box-shadow:0 2px 8px rgba(102, 126, 234, 0.1);">
+        <div style="font-size:24px;margin-bottom:4px;">🏪</div>
+        <h4 style="color:#667eea;margin:4px 0;font-size:13px;font-weight:bold;">In-Store</h4>
+        <p style="color:#d0c6a0;font-size:11px;margin:0;line-height:1.3;">Wide selection with expert help.</p>
+      </div>
+      
+      <div style="background:linear-gradient(135deg, rgba(37,211,102,0.15) 0%, rgba(37,211,102,0.05) 100%);border:1px solid #25d366;padding:10px;border-radius:8px;text-align:center;transition:all 0.3s;border-left:2px solid #25d366;box-shadow:0 2px 8px rgba(37, 211, 102, 0.1);">
+        <div style="font-size:24px;margin-bottom:4px;">📦</div>
+        <h4 style="color:#25d366;margin:4px 0;font-size:13px;font-weight:bold;">Bulk Orders</h4>
+        <p style="color:#d0c6a0;font-size:11px;margin:0;line-height:1.3;">Special bulk rates.</p>
+      </div>
+      
+      <div style="background:linear-gradient(135deg, rgba(102,126,234,0.15) 0%, rgba(102,126,234,0.05) 100%);border:1px solid #667eea;padding:10px;border-radius:8px;text-align:center;transition:all 0.3s;border-left:2px solid #667eea;box-shadow:0 2px 8px rgba(102, 126, 234, 0.1);">
+        <div style="font-size:24px;margin-bottom:4px;">⏰</div>
+        <h4 style="color:#667eea;margin:4px 0;font-size:13px;font-weight:bold;">24/7 Shop</h4>
+        <p style="color:#d0c6a0;font-size:11px;margin:0;line-height:1.3;">Order anytime.</p>
+      </div>
+      
+      <div style="background:linear-gradient(135deg, rgba(37,211,102,0.15) 0%, rgba(37,211,102,0.05) 100%);border:1px solid #25d366;padding:10px;border-radius:8px;text-align:center;transition:all 0.3s;border-left:2px solid #25d366;box-shadow:0 2px 8px rgba(37, 211, 102, 0.1);">
+        <div style="font-size:24px;margin-bottom:4px;">🎁</div>
+        <h4 style="color:#25d366;margin:4px 0;font-size:13px;font-weight:bold;">Loyalty</h4>
+        <p style="color:#d0c6a0;font-size:11px;margin:0;line-height:1.3;">Discounts & rewards.</p>
+      </div>
+      
+      <div style="background:linear-gradient(135deg, rgba(102,126,234,0.15) 0%, rgba(102,126,234,0.05) 100%);border:1px solid #667eea;padding:10px;border-radius:8px;text-align:center;transition:all 0.3s;border-left:2px solid #667eea;box-shadow:0 2px 8px rgba(102, 126, 234, 0.1);">
+        <div style="font-size:24px;margin-bottom:4px;">✅</div>
+        <h4 style="color:#667eea;margin:4px 0;font-size:13px;font-weight:bold;">Quality</h4>
+        <p style="color:#d0c6a0;font-size:11px;margin:0;line-height:1.3;">100% fresh & verified.</p>
+      </div>
+    </div>
+    
+    <div style="background:rgba(37,211,102,0.12);border:1px solid #25d366;padding:12px;border-radius:10px;text-align:center;">
+      <h3 style="color:#25d366;margin:0 0 10px 0;font-size:16px;">⏳ Hours</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;color:#e0d6a0;font-size:12px;">
+        <div style="padding:8px;background:rgba(0,0,0,0.2);border-radius:6px;">
+          <strong>📅 Mon-Sun:</strong><br>8AM - 8PM
+        </div>
+        <div style="padding:8px;background:rgba(0,0,0,0.2);border-radius:6px;">
+          <strong>🚚 Delivery:</strong><br>8AM - 8PM
+        </div>
+        <div style="padding:8px;background:rgba(0,0,0,0.2);border-radius:6px;">
+          <strong>🌐 Online:</strong><br>24/7
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" style="padding:36px 18px; max-width:900px;margin:24px auto;background:rgba(255,255,255,0.02);border-radius:8px;color:#fff;">
+    <h3>Contact Us</h3>
+    
+    <!-- Quick Call Buttons -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+      <a href="tel:+94743490830" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:18px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;border-radius:12px;text-decoration:none;font-weight:bold;font-size:14px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);border:2px solid #25d366;cursor:pointer;box-shadow:0 12px 30px rgba(37, 211, 102, 0.3), inset 0 1px 0 rgba(255,255,255,0.3);position:relative;overflow:hidden;">
+        <span style="font-size:24px;position:relative;z-index:2;">☎️</span><span style="position:relative;z-index:2;">Call Primary: 0743490830</span>
+        <span style="position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);transition:left 0.5s;z-index:1;"></span>
+      </a>
+      <a href="tel:+94770172009" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:18px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;border-radius:12px;text-decoration:none;font-weight:bold;font-size:14px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);border:2px solid #25d366;cursor:pointer;box-shadow:0 12px 30px rgba(37, 211, 102, 0.3), inset 0 1px 0 rgba(255,255,255,0.3);position:relative;overflow:hidden;">
+        <span style="font-size:24px;position:relative;z-index:2;">☎️</span><span style="position:relative;z-index:2;">Call Secondary: 0770172009</span>
+        <span style="position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);transition:left 0.5s;z-index:1;"></span>
+      </a>
+      <a href="mailto:anuththaratraders@gmail.com" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:18px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;border-radius:12px;text-decoration:none;font-weight:bold;font-size:14px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);border:2px solid #667eea;cursor:pointer;box-shadow:0 12px 30px rgba(102, 126, 234, 0.3), inset 0 1px 0 rgba(255,255,255,0.3);position:relative;overflow:hidden;">
+        <span style="font-size:24px;position:relative;z-index:2;">✉️</span><span style="position:relative;z-index:2;">Email Us</span>
+        <span style="position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);transition:left 0.5s;z-index:1;"></span>
+      </a>
+      <a href="https://wa.me/94743490830?text=Hello%20Anuththara%20Traders" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:18px;background:linear-gradient(135deg, #25d366 0%, #128c7e 100%);color:#fff;border-radius:12px;text-decoration:none;font-weight:bold;font-size:14px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);border:2px solid #25d366;cursor:pointer;box-shadow:0 12px 30px rgba(37, 211, 102, 0.3), inset 0 1px 0 rgba(255,255,255,0.3);position:relative;overflow:hidden;">
+        <span style="font-size:24px;position:relative;z-index:2;">💬</span><span style="position:relative;z-index:2;">WhatsApp Us</span>
+        <span style="position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);transition:left 0.5s;z-index:1;"></span>
+      </a>
+    </div>
+
+    <!-- Contact Details -->
+    <ul style="list-style:none;padding:0;margin:8px 0 0;color:#f0e6b8">
+      <li style="margin-bottom:10px;"><strong>📞 Phone (Primary):</strong> <a href="tel:+94743490830" style="color:#25d366;text-decoration:none;font-weight:bold;">0743490830</a> <span style="color:#999;font-size:12px;margin-left:8px;">(Tap to call)</span></li>
+      <li style="margin-bottom:10px;"><strong>📞 Phone (Secondary):</strong> <a href="tel:+94770172009" style="color:#25d366;text-decoration:none;font-weight:bold;">0770172009</a> <span style="color:#999;font-size:12px;margin-left:8px;">(Tap to call)</span></li>
+      <li style="margin-bottom:10px;"><strong>📧 Email:</strong> <a href="mailto:anuththaratraders@gmail.com" style="color:#667eea;text-decoration:none;font-weight:bold;">anuththaratraders@gmail.com</a></li>
+      <li style="margin-bottom:10px;"><strong>� WhatsApp:</strong> <a href="https://wa.me/94743490830?text=Hello%20Anuththara%20Traders" target="_blank" style="color:#25d366;text-decoration:none;font-weight:bold;">0743490830</a> <span style="color:#999;font-size:12px;margin-left:8px;">(Send message)</span></li>
+      <li style="margin-bottom:10px;"><strong>�📍 Address:</strong> 116/3, Abangaga junction, Kawatayamuna, Kawdupalella.</li>
+      <li style="margin-bottom:10px;"><strong>⏰ Hours:</strong> <span style="color:#f0e6b8;">Monday - Sunday, 8:00 AM - 8:00 PM</span></li>
+    </ul>
+
+    <p style="margin-top:20px;color:#e6dfb0">Follow us: <a href="#" style="color:#f0e6b8">Facebook</a> · <a href="#" style="color:#f0e6b8">Instagram</a></p>
+  </section>
+
+  <!-- Floating Sidebar Navigation -->
+  <div class="floating-sidebar" id="floatingSidebar">
+    <button class="sidebar-btn" id="scrollTopBtn" title="Scroll to Top" style="display:none;">⬆️ Top</button>
+    <button class="sidebar-btn" id="toggleCategoriesBtn" title="Show Categories">📂 Categories</button>
+    
+    <div id="categoriesPanel" style="display:none;padding-top:8px;">
+      <div class="sidebar-label">Quick Jump</div>
+      <button class="category-quick-btn" data-target="brands">🏷️ Brands</button>
+      <button class="category-quick-btn" data-target="products">📦 Products</button>
+      <button class="category-quick-btn" data-target="order">🛒 Order</button>
+      <button class="category-quick-btn" data-target="buynowpaylater">💳 Buy Now</button>
+      <button class="category-quick-btn" data-target="contact">📞 Contact</button>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <button class="sidebar-btn" id="scrollDownBtn" title="Scroll Down">⬇️ Down</button>
+    <button class="sidebar-btn" id="contactFloatBtn" title="Contact Us">☎️ Contact</button>
+  </div>
+
+</body>
+</html>
