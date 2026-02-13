@@ -360,7 +360,8 @@
 
     function showAdminPanel() {
       const password = prompt('Enter admin password:');
-      if (password === 'admin123') {
+      const storedPassword = localStorage.getItem('adminPassword') || 'admin123';
+      if (password === storedPassword) {
         openAdminPanel();
       } else {
         alert('Invalid password');
@@ -379,6 +380,7 @@
       html += '<button id="productsTab" style="padding:10px 20px;background:#25d366;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;">Products</button>';
       html += '<button id="brandsTab" style="padding:10px 20px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;">Brands</button>';
       html += '<button id="historyTab" style="padding:10px 20px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;">Order & BNPL History</button>';
+      html += '<button id="settingsTab" style="padding:10px 20px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;">Settings</button>';
       html += '</div>';
 
       // PRODUCTS TAB
@@ -537,6 +539,20 @@
       
       html += '</div>';
 
+      // SETTINGS TAB
+      html += '<div id="settingsTabContent" style="display:none;">';
+      html += '<div style="background:#222;padding:20px;border-radius:8px;border:1px solid #444;max-width:500px;">';
+      html += '<h3 style="margin-top:0;color:#f6eec2;">Change Admin Password</h3>';
+      html += '<div style="display:flex;flex-direction:column;gap:12px;">';
+      html += '<input type="password" id="currentPassword" placeholder="Current Password" style="padding:10px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
+      html += '<input type="password" id="newPassword" placeholder="New Password" style="padding:10px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
+      html += '<input type="password" id="confirmPassword" placeholder="Confirm New Password" style="padding:10px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
+      html += '<button id="changePasswordBtn" style="padding:10px;background:#25d366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">Change Password</button>';
+      html += '</div>';
+      html += '<div id="passwordMessage" style="margin-top:12px;padding:10px;border-radius:6px;display:none;text-align:center;font-weight:bold;"></div>';
+      html += '</div>';
+      html += '</div>';
+
       html += '</div>';
 
       // Create overlay
@@ -575,9 +591,77 @@
         document.getElementById('productsTabContent').style.display = 'none';
         document.getElementById('brandsTabContent').style.display = 'none';
         document.getElementById('historyTabContent').style.display = 'block';
+        document.getElementById('settingsTabContent').style.display = 'none';
         document.getElementById('productsTab').style.background = '#444';
         document.getElementById('brandsTab').style.background = '#444';
         document.getElementById('historyTab').style.background = '#25d366';
+        document.getElementById('settingsTab').style.background = '#444';
+      });
+
+      document.getElementById('settingsTab').addEventListener('click', () => {
+        document.getElementById('productsTabContent').style.display = 'none';
+        document.getElementById('brandsTabContent').style.display = 'none';
+        document.getElementById('historyTabContent').style.display = 'none';
+        document.getElementById('settingsTabContent').style.display = 'block';
+        document.getElementById('productsTab').style.background = '#444';
+        document.getElementById('brandsTab').style.background = '#444';
+        document.getElementById('historyTab').style.background = '#444';
+        document.getElementById('settingsTab').style.background = '#25d366';
+      });
+
+      // Change password button
+      document.getElementById('changePasswordBtn').addEventListener('click', () => {
+        const currentPass = document.getElementById('currentPassword').value;
+        const newPass = document.getElementById('newPassword').value;
+        const confirmPass = document.getElementById('confirmPassword').value;
+        const messageDiv = document.getElementById('passwordMessage');
+        
+        if (!currentPass || !newPass || !confirmPass) {
+          messageDiv.style.display = 'block';
+          messageDiv.style.background = '#ff6b6b';
+          messageDiv.style.color = '#fff';
+          messageDiv.textContent = 'All fields are required';
+          return;
+        }
+        
+        if (currentPass !== 'admin123') {
+          messageDiv.style.display = 'block';
+          messageDiv.style.background = '#ff6b6b';
+          messageDiv.style.color = '#fff';
+          messageDiv.textContent = 'Current password is incorrect';
+          return;
+        }
+        
+        if (newPass.length < 6) {
+          messageDiv.style.display = 'block';
+          messageDiv.style.background = '#ff6b6b';
+          messageDiv.style.color = '#fff';
+          messageDiv.textContent = 'New password must be at least 6 characters';
+          return;
+        }
+        
+        if (newPass !== confirmPass) {
+          messageDiv.style.display = 'block';
+          messageDiv.style.background = '#ff6b6b';
+          messageDiv.style.color = '#fff';
+          messageDiv.textContent = 'Passwords do not match';
+          return;
+        }
+        
+        // Store new password in localStorage
+        localStorage.setItem('adminPassword', newPass);
+        
+        // Update the password check in the showAdminPanel function
+        window.adminPassword = newPass;
+        
+        messageDiv.style.display = 'block';
+        messageDiv.style.background = '#25d366';
+        messageDiv.style.color = '#fff';
+        messageDiv.textContent = 'Password changed successfully!';
+        
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
       });
 
       // Add product button
@@ -2033,3 +2117,4 @@
 
 </body>
 </html>
+
