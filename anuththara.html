@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Anuththara Traders</title>
+  <link rel="stylesheet" href="advanced-styles.css">
   <style>
     /* --- IMAGE SIZING FIXES: make images responsive and constrain heights --- */
     /* Global: keep images from overflowing containers */
@@ -13,14 +14,25 @@
       display: block;
     }
 
-    body{font-family:Segoe UI, Roboto, Arial, sans-serif; padding:8px; margin:0; color:#F7E9C4;}
-    /* Plain black background for high contrast */
     body{
-      background-color:#000000;
-      background-image:none;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
+      font-family:'Segoe UI', Roboto, '-apple-system', 'BlinkMacSystemFont', sans-serif; 
+      padding:8px; 
+      margin:0; 
+      color:#F7E9C4; 
+      background-color:#000000; 
+      background-image:none; 
+      -webkit-font-smoothing:antialiased; 
+      -moz-osx-font-smoothing:grayscale; 
+      overflow-x:hidden;
+      scroll-behavior:smooth;
     }
+    * { 
+      transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+    }
+    *::-webkit-scrollbar { width: 10px; height: 10px; }
+    *::-webkit-scrollbar-track { background: rgba(37, 211, 102, 0.1); border-radius: 10px; }
+    *::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #25d366 0%, #20b854 100%); border-radius: 10px; box-shadow: 0 0 20px rgba(37, 211, 102, 0.3); }
+    *::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #2edc71 0%, #25d366 100%); box-shadow: 0 0 30px rgba(37, 211, 102, 0.5); }
     @media (max-width:768px) { body{padding:4px;} }
 
     /* watermark using the logo file (save anuththara-logo.png next to this file) */
@@ -28,19 +40,51 @@
       position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.06; display:block; background-repeat:no-repeat; background-position:center top; background-size:420px 420px;
     }
 
-    .center{max-width:900px;margin:0 auto;text-align:center; position:relative; z-index:1}
-    /* Logo: use a responsive width and auto height */
+    .center{
+      max-width:900px;
+      margin:0 auto;
+      text-align:center; 
+      position:relative; 
+      z-index:1; 
+      animation:fadeIn 1s ease-out 0.3s backwards;
+    }
+    @keyframes fadeIn{
+      from{
+        opacity:0;
+        filter:blur(10px);
+      }
+      to{
+        opacity:1;
+        filter:blur(0);
+      }
+    }
+    /* Logo: Enhanced Responsive width and auto height */
     .logo {
-      width: 220px;
+      width: 240px;
       max-width: 90%;
       height: auto;
       display: block;
-      margin: 0 auto 6px;
+      margin: 0 auto 8px;
       object-fit: contain;
       background-color: transparent;
+      animation: fadeInDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    @media (max-width:768px) { .logo{width:160px; max-width:85%; margin:0 auto 4px;} }
-    @media (max-width:520px) { .logo{width:120px; max-width:90%; margin:0 auto 2px;} }
+    .logo:hover { 
+      transform: scale(1.04) translateY(-4px);
+    }
+    @keyframes fadeInDown { 
+      from { 
+        opacity:0; 
+        transform:translateY(-30px) scale(0.9);
+      } 
+      to { 
+        opacity:1; 
+        transform:translateY(0) scale(1);
+      } 
+    }
+    @media (max-width:768px) { .logo{width:180px; max-width:85%; margin:0 auto 6px;} }
+    @media (max-width:520px) { .logo{width:140px; max-width:90%; margin:0 auto 4px;} }
     
     /* Brand image preview (admin) — fixed square, crop if needed */
     #brandImagePreviewImg,
@@ -52,105 +96,395 @@
       display: block;
     }
 
-    /* Product card images */
-    .product-card img,
-    .product-image {
-      width: 100%;
-      height: 140px;
-      object-fit: cover;
-      border-radius: 6px;
+    /* Card Hover Effects - Enhanced */
+    .product-card,
+    .cat-card,
+    .brand-card,
+    .service-card {
+      transition:all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position:relative;
+      overflow:hidden;
+      background:linear-gradient(135deg, rgba(30,30,30,0.6) 0%, rgba(25,25,25,0.4) 100%);
+      border:1.5px solid rgba(37, 211, 102, 0.2);
+      box-shadow:0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(37, 211, 102, 0.1);
+      border-radius:16px;
+      backdrop-filter:blur(10px);
+      padding:20px;
+    }
+    .product-card::before,
+    .cat-card::before,
+    .brand-card::before,
+    .service-card::before {
+      content:'';
+      position:absolute;
+      top:0;
+      left:-100%;
+      width:100%;
+      height:100%;
+      background:linear-gradient(90deg, transparent, rgba(37, 211, 102, 0.15), transparent);
+      transition:left 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index:1;
+    }
+    .product-card::after,
+    .cat-card::after,
+    .brand-card::after,
+    .service-card::after {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(37, 211, 102, 0.1), transparent 60%);
+      opacity:0;
+      transition:opacity 0.3s ease;
+      z-index:0;
+    }
+    .product-card:hover::before,
+    .cat-card:hover::before,
+    .brand-card:hover::before,
+    .service-card:hover::before {
+      left:100%;
+    }
+    .product-card:hover::after,
+    .cat-card:hover::after,
+    .brand-card:hover::after,
+    .service-card:hover::after {
+      opacity:1;
+    }
+    .product-card:hover,
+    .cat-card:hover,
+    .brand-card:hover,
+    .service-card:hover {
+      transform:translateY(-12px) scale(1.03);
+      box-shadow:0 24px 60px rgba(37, 211, 102, 0.4), inset 0 1px 0 rgba(37, 211, 102, 0.2), 0 0 40px rgba(37, 211, 102, 0.1);
+      border-color:#25d366;
+      background:linear-gradient(135deg, rgba(37, 211, 102, 0.1) 0%, rgba(25,25,25,0.5) 100%);
     }
     
-    h1{margin:4px 0; color:#fff; font-size:24px;}
-    h2{color:#e7e0b8; font-size:18px;}
-    p{color:#e0d6a0; font-size:13px;}
+    /* Advanced Gradient Backgrounds - Enhanced */
+    body {
+      background:#000000;
+      background-attachment:fixed;
+      min-height:100vh;
+      position:relative;
+    }
+    
+    body::before {
+      content:'';
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:radial-gradient(ellipse at 10% 50%, rgba(37, 211, 102, 0.01), transparent 50%),
+                  radial-gradient(ellipse at 90% 50%, rgba(102, 126, 234, 0.01), transparent 50%);
+      pointer-events:none;
+      z-index:0;
+      animation:gradientShift 15s ease-in-out infinite;
+    }
+    
+    @keyframes gradientShift {
+      0%, 100% { opacity:0.1; }
+      50% { opacity:0.2; }
+    }
+    
+    /* Enhanced Typography */
+    h1, h2, h3, h4, h5 {
+      background:linear-gradient(135deg, #f6eec2 0%, #e0d6a0 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+      font-weight:700;
+      letter-spacing:0.5px;
+      text-transform:capitalize;
+    }
+    
+    h1 { 
+      font-size:48px; 
+      margin:12px 0; 
+      text-shadow:0 4px 30px rgba(37, 211, 102, 0.2), 0 0 80px rgba(37, 211, 102, 0.1);
+      animation: glowPulse 4s ease-in-out infinite;
+    }
+    h2 { 
+      font-size:28px; 
+      margin:16px 0;
+      letter-spacing:1px;
+    }
+    h3 { 
+      font-size:24px; 
+      margin-bottom:20px;
+      position:relative;
+      padding-bottom:12px;
+    }
+    h3::after {
+      content:'';
+      position:absolute;
+      bottom:0;
+      left:0;
+      width:60px;
+      height:3px;
+      background:linear-gradient(90deg, #25d366, transparent);
+      border-radius:2px;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { filter: drop-shadow(0 0 10px rgba(37, 211, 102, 0.3)); }
+      50% { filter: drop-shadow(0 0 30px rgba(37, 211, 102, 0.6)); }
+    }
+    
+    /* Advanced Text Effects - Enhanced */
+    p { 
+      color:#e0d6a0; 
+      font-size:15px; 
+      line-height:1.9; 
+      letter-spacing:0.4px;
+      position:relative;
+    }
+    strong { 
+      color:#f6eec2; 
+      font-weight:700;
+      background:linear-gradient(135deg, #f6eec2 0%, #e0d6a0 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
     @media (max-width:768px) { h1{font-size:20px;} h2{font-size:16px;} p{font-size:12px;} }
     @media (max-width:520px) { h1{font-size:18px;} h2{font-size:14px;} p{font-size:11px;} }
     @media (max-width:520px){ .watermark{background-size:260px 260px} }
-    /* Navigation menu styles - Left Sidebar */
-    .site-header{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;padding:8px 10px;z-index:2;background:rgba(0,0,0,0.95);border-bottom:2px solid #25d366;}
+    /* Navigation menu styles - Site Header */
+    .site-header{
+      position:sticky;
+      top:0;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:12px 16px;
+      z-index:2;
+      background:linear-gradient(180deg, rgba(0,0,0,0.98) 0%, rgba(10,10,10,0.95) 100%);
+      border-bottom:2px solid #25d366;
+      backdrop-filter:blur(15px);
+      box-shadow:0 12px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(37, 211, 102, 0.15);
+      animation:slideDown 0.6s ease-out;
+    }
+    @keyframes slideDown{from{transform:translateY(-100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
     @media (max-width:768px) { .site-header{padding:6px 8px;} }
-    .hamburger-btn{display:block;background:#25d366;color:#000;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;font-size:16px;transition:all 0.3s;}
-    .hamburger-btn:hover{background:#2edc71;transform:scale(1.05);}
-    .site-nav{position:fixed;left:-280px;top:0;width:280px;height:100vh;background:linear-gradient(135deg, rgba(20,20,20,0.98) 0%, rgba(30,30,30,0.98) 100%);border-right:2px solid #25d366;padding:20px 0;z-index:1050;transition:left 0.3s ease;overflow-y:auto;}
-    .site-nav.active{left:0;}
-    .close-nav{display:none;background:transparent;border:none;color:#25d366;font-size:24px;cursor:pointer;padding:10px;margin:10px;float:right;}
-    .site-nav.active .close-nav{display:block;}
-    .menu{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0;}
-    .menu li{border-bottom:1px solid rgba(37,211,102,0.2);}
-    .menu a{color:#F7E9C4;text-decoration:none;padding:10px 16px;display:block;transition:background .2s,color .2s; font-size:13px;}
-    @media (max-width:768px) { .menu a{padding:8px 12px; font-size:12px;} }
-    @media (max-width:520px) { .menu a{padding:6px 10px; font-size:11px;} }
-    .menu a:hover{background:rgba(37,211,102,0.2);color:#25d366;}
-    /* Floating Menu Button */
-    .floating-menu-btn{position:fixed;left:20px;bottom:20px;width:60px;height:60px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;border:none;border-radius:50%;cursor:pointer;font-weight:bold;font-size:24px;display:flex;align-items:center;justify-content:center;transition:all 0.3s;box-shadow:0 8px 20px rgba(37, 211, 102, 0.3);z-index:998;}
-    .floating-menu-btn:hover{transform:scale(1.1);box-shadow:0 12px 30px rgba(37, 211, 102, 0.4);}
-    .floating-menu-btn:active{transform:scale(0.95);}
+
+
+    /* Floating Menu Button - Enhanced */
+    .floating-menu-btn{
+      position:fixed;
+      left:20px;
+      bottom:20px;
+      width:70px;
+      height:70px;
+      background:linear-gradient(135deg, #25d366 0%, #20b854 100%);
+      color:#000;
+      border:none;
+      border-radius:50%;
+      cursor:pointer;
+      font-weight:bold;
+      font-size:28px;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      transition:all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow:0 10px 30px rgba(37, 211, 102, 0.4), inset 0 1px 0 rgba(255,255,255,0.4);
+      z-index:998;
+      position:relative;
+      overflow:hidden;
+    }
+    .floating-menu-btn::before{
+      content:'';
+      position:absolute;
+      top:50%;
+      left:50%;
+      width:0;
+      height:0;
+      background:rgba(255,255,255,0.25);
+      border-radius:50%;
+      transition:width 0.6s, height 0.6s;
+    }
+    .floating-menu-btn:hover{
+      transform:translateY(-6px) scale(1.15);
+      box-shadow:0 18px 50px rgba(37, 211, 102, 0.6), inset 0 1px 0 rgba(255,255,255,0.5);
+      background:linear-gradient(135deg, #2edc71 0%, #25d366 100%);
+    }
+    .floating-menu-btn:active{
+      transform:scale(0.92);
+    }
+    .floating-menu-btn:hover::before{
+      width:120%;
+      height:120%;
+      top:0;
+      left:0;
+    }
     /* Left Sidebar Menu Bar */
-    .left-menu-bar{position:fixed;left:-60px;top:60px;width:60px;height:calc(100vh - 60px);background:linear-gradient(135deg, rgba(20,20,20,0.98) 0%, rgba(30,30,30,0.98) 100%);border-right:2px solid #25d366;display:flex;flex-direction:column;gap:0;padding:4px 0;z-index:1000;overflow-y:auto;transition:left 0.3s ease;}
-    .left-menu-bar.active{left:0;}
-    .left-menu-btn{width:100%;padding:6px 0;background:transparent;border:none;border-bottom:1px solid rgba(37,211,102,0.2);color:#f6eec2;cursor:pointer;font-size:18px;transition:all 0.3s;display:flex;align-items:center;justify-content:center;height:50px;}
-    .left-menu-btn:hover{background:rgba(37,211,102,0.2);color:#25d366;transform:scale(1.05);}
-    @media (max-width:768px){ .left-menu-bar{width:55px;} .left-menu-btn{font-size:16px;height:45px;} }
     @media (max-width:768px){
-      .hamburger-btn{display:block;}
       .floating-menu-btn{display:flex;}
       .site-header{flex-wrap:wrap;}
     }
     .nav-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;display:none;pointer-events:none;}
     .nav-overlay.active{display:block;pointer-events:auto;}
 
-    /* Premium Floating Sidebar Styles */
+    /* Premium Floating Sidebar Styles - Enhanced */
     .floating-sidebar{
-      position:fixed;right:14px;bottom:14px;z-index:999;display:flex;flex-direction:column;gap:8px;background:linear-gradient(135deg, rgba(20,20,20,0.98) 0%, rgba(30,30,30,0.98) 100%);padding:10px;border-radius:12px;border:1px solid #25d366;box-shadow:0 12px 40px rgba(37, 211, 102, 0.25), inset 0 1px 0 rgba(255,255,255,0.1);backdrop-filter:blur(20px);transition:all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      z-index:999;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      background:linear-gradient(135deg, rgba(20,20,20,0.98) 0%, rgba(30,30,30,0.98) 100%);
+      padding:16px;
+      border-radius:20px;
+      border:2px solid #25d366;
+      box-shadow:0 24px 80px rgba(37, 211, 102, 0.4), inset 0 1px 0 rgba(255,255,255,0.25);
+      backdrop-filter:blur(40px);
+      transition:all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      animation:slideInRight 1s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-
+    
+    @keyframes slideInRight{from{transform:translateX(250px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+    
     .floating-sidebar:hover{
-      box-shadow:0 18px 60px rgba(37, 211, 102, 0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+      box-shadow:0 32px 100px rgba(37, 211, 102, 0.5), inset 0 1px 0 rgba(255,255,255,0.35);
       border-color:#2edc71;
-      transform:translateY(-3px);
+      transform:translateY(-8px);
+      background:linear-gradient(135deg, rgba(20,20,20,0.99) 0%, rgba(25,25,25,0.99) 100%);
     }
 
     .sidebar-btn{
-      padding:6px 10px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:10px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);text-align:center;white-space:nowrap;min-width:70px;box-shadow:0 4px 10px rgba(37, 211, 102, 0.2), inset 0 1px 0 rgba(255,255,255,0.3);position:relative;overflow:hidden;
+      padding:8px 14px;
+      background:linear-gradient(135deg, #25d366 0%, #20b854 100%);
+      color:#000;
+      border:none;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:11px;
+      transition:all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      text-align:center;
+      white-space:nowrap;
+      min-width:70px;
+      box-shadow:0 6px 20px rgba(37, 211, 102, 0.3), inset 0 1px 0 rgba(255,255,255,0.4);
+      position:relative;
+      overflow:hidden;
+      text-transform:uppercase;
+      letter-spacing:0.5px;
     }
 
     .sidebar-btn::before{
-      content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);transition:left 0.5s;
+      content:'';
+      position:absolute;
+      top:0;
+      left:-100%;
+      width:100%;
+      height:100%;
+      background:linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition:left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .sidebar-btn::after {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:radial-gradient(circle, rgba(255,255,255,0.2), transparent 70%);
+      opacity:0;
+      transition:opacity 0.3s;
     }
 
     .sidebar-btn:hover{
       background:linear-gradient(135deg, #2edc71 0%, #25d366 100%);
-      transform:translateY(-3px) scale(1.08);
-      box-shadow:0 12px 30px rgba(37, 211, 102, 0.4), inset 0 1px 0 rgba(255,255,255,0.4);
+      transform:translateY(-4px) scale(1.08);
+      box-shadow:0 12px 40px rgba(37, 211, 102, 0.5), inset 0 1px 0 rgba(255,255,255,0.5);
+      letter-spacing:1px;
     }
 
     .sidebar-btn:hover::before{
       left:100%;
     }
 
+    .sidebar-btn:hover::after {
+      opacity:1;
+    }
+
     .sidebar-btn:active{
-      transform:translateY(-1px) scale(1.05);
+      transform:translateY(-1px) scale(1.03);
+      box-shadow:0 4px 15px rgba(37, 211, 102, 0.3), inset 0 2px 5px rgba(0,0,0,0.2);
     }
 
     .sidebar-divider{
-      height:1px;background:linear-gradient(90deg, transparent, rgba(37, 211, 102, 0.5), transparent);margin:8px 0;
+      height:2px;
+      background:linear-gradient(90deg, transparent, rgba(37, 211, 102, 0.4), rgba(102, 126, 234, 0.2), transparent);
+      margin:12px 0;
+      border-radius:1px;
+      box-shadow:0 0 10px rgba(37, 211, 102, 0.1);
     }
 
     .sidebar-label{
-      color:#25d366;font-size:11px;text-transform:uppercase;font-weight:bold;padding:0 4px;margin-top:6px;letter-spacing:1px;text-shadow:0 0 10px rgba(37, 211, 102, 0.2);
+      color:#25d366;
+      font-size:12px;
+      text-transform:uppercase;
+      font-weight:bold;
+      padding:4px 8px;
+      margin-top:8px;
+      letter-spacing:1.2px;
+      text-shadow:0 0 15px rgba(37, 211, 102, 0.3);
+      position:relative;
+    }
+
+    .sidebar-label::after {
+      content:'';
+      position:absolute;
+      bottom:-2px;
+      left:0;
+      width:30%;
+      height:2px;
+      background:linear-gradient(90deg, #25d366, transparent);
     }
 
     .category-quick-btn{
-      padding:10px 14px;background:linear-gradient(135deg, rgba(37, 211, 102, 0.1) 0%, rgba(32, 184, 84, 0.1) 100%);color:#f6eec2;border:2px solid #25d366;border-radius:8px;cursor:pointer;font-weight:bold;font-size:12px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);text-align:center;box-shadow:0 4px 15px rgba(37, 211, 102, 0.15), inset 0 1px 0 rgba(255,255,255,0.1);position:relative;
+      padding:12px 16px;
+      background:linear-gradient(135deg, rgba(37, 211, 102, 0.15) 0%, rgba(32, 184, 84, 0.08) 100%);
+      color:#f6eec2;
+      border:2px solid #25d366;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:bold;
+      font-size:12px;
+      transition:all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      text-align:center;
+      box-shadow:0 6px 20px rgba(37, 211, 102, 0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+      position:relative;
+      text-transform:uppercase;
+      letter-spacing:0.5px;
+      overflow:hidden;
+    }
+
+    .category-quick-btn::before {
+      content:'';
+      position:absolute;
+      top:0;
+      left:-100%;
+      width:100%;
+      height:100%;
+      background:linear-gradient(90deg, transparent, rgba(37, 211, 102, 0.2), transparent);
+      transition:left 0.6s;
     }
 
     .category-quick-btn:hover{
-      background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;border-color:#2edc71;transform:translateY(-3px);box-shadow:0 8px 25px rgba(37, 211, 102, 0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+      background:linear-gradient(135deg, #25d366 0%, #20b854 100%);
+      color:#000;
+      border-color:#2edc71;
+      transform:translateY(-4px) scale(1.05);
+      box-shadow:0 10px 30px rgba(37, 211, 102, 0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+    }
+
+    .category-quick-btn:hover::before {
+      left:100%;
     }
 
     .category-quick-btn:active{
-      transform:translateY(-1px);
+      transform:translateY(-1px) scale(0.98);
     }
 
     /* Premium Contact Buttons Styles */
@@ -185,39 +519,284 @@
     #google_translate_element{padding:10px 0;}
     .goog-te-gadget{color:#f6eec2 !important;}
     .goog-te-gadget .goog-te-combo{background:#222 !important;border:1px solid #444 !important;color:#f6eec2 !important;border-radius:6px !important;padding:8px !important;font-weight:bold !important;}
+    
+    /* Advanced Section Styling - Enhanced */
+    section{
+      animation:fadeInUp 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s backwards;
+      background:linear-gradient(135deg, rgba(25,25,25,0.7) 0%, rgba(15,15,15,0.6) 100%);
+      border:1.5px solid rgba(37, 211, 102, 0.25);
+      box-shadow:0 16px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(37, 211, 102, 0.15), 0 0 80px rgba(37, 211, 102, 0.06);
+      backdrop-filter:blur(20px);
+      border-radius:24px;
+      position:relative;
+      overflow:hidden;
+    }
+    
+    section::before {
+      content:'';
+      position:absolute;
+      top:-50%;
+      right:-50%;
+      width:200px;
+      height:200px;
+      background:radial-gradient(circle, rgba(37, 211, 102, 0.1), transparent);
+      border-radius:50%;
+      pointer-events:none;
+      animation:float 8s ease-in-out infinite;
+    }
+
+    section::after {
+      content:'';
+      position:absolute;
+      bottom:-40%;
+      left:-40%;
+      width:180px;
+      height:180px;
+      background:radial-gradient(circle, rgba(102, 126, 234, 0.08), transparent);
+      border-radius:50%;
+      pointer-events:none;
+      animation:float 10s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(30px) rotate(180deg); }
+    }
+      width:200%;
+      height:200%;
+      background:radial-gradient(circle, rgba(37, 211, 102, 0.03) 0%, transparent 70%);
+      pointer-events:none;
+    }
+    
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(40px);}to{opacity:1;transform:translateY(0);}}
+    
+    /* Button Enhancements */
+    /* Advanced Button Styling */
+    button:not([type="submit"]) {
+      position:relative;
+      overflow:hidden;
+      transition:all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    button:not([type="submit"])::after {
+      content:'';
+      position:absolute;
+      top:50%;
+      left:50%;
+      width:0;
+      height:0;
+      background:radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 100%);
+      border-radius:50%;
+      transform:translate(-50%, -50%);
+      transition:width 0.6s, height 0.6s;
+    }
+    
+    button:not([type="submit"]):active::after {
+      width:300px;
+      height:300px;
+    }
+    
+    .sidebar-btn {
+      background:linear-gradient(135deg, #25d366 0%, #20b854 100%);
+      box-shadow:0 6px 20px rgba(37, 211, 102, 0.3), inset 0 1px 0 rgba(255,255,255,0.4);
+      border-radius:10px;
+    }
+    
+    .sidebar-btn:hover {
+      background:linear-gradient(135deg, #2edc71 0%, #25d366 100%);
+      box-shadow:0 12px 40px rgba(37, 211, 102, 0.5), inset 0 1px 0 rgba(255,255,255,0.6);
+      transform:translateY(-4px) scale(1.1);
+    }
+    
+    /* Advanced Button Animations */
+    .service-card,
+    .cat-card,
+    .product-card {
+      position:relative;
+      overflow:hidden;
+    }
+    
+    .service-card::after,
+    .cat-card::after,
+    .product-card::after {
+      content:'';
+      position:absolute;
+      bottom:-100%;
+      left:0;
+      width:100%;
+      height:100%;
+      background:linear-gradient(180deg, transparent, rgba(37, 211, 102, 0.1));
+      transition:bottom 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    .service-card:hover::after,
+    .cat-card:hover::after,
+    .product-card:hover::after {
+      bottom:0;
+    }
+    
+    /* Premium Text Effects */
+    h1, h2, h3, h4, h5 {
+      background:linear-gradient(135deg, #f6eec2 0%, #e0d6a0 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    
+    /* Contact Button Hover */
+    a[href^="tel:"],
+    a[href^="mailto:"],
+    a[href^="https://wa.me"] {
+      transition:all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    a[href^="tel:"]:hover,
+    a[href^="mailto:"]:hover,
+    a[href^="https://wa.me"]:hover {
+      transform:translateY(-4px) scale(1.02);
+      filter:brightness(1.1);
+    }
+    
+    a[href^="tel:"]:hover span:nth-child(3),
+    a[href^="mailto:"]:hover span:nth-child(3),
+    a[href^="https://wa.me"]:hover span:nth-child(3) {
+      left:100%;
+    }
+
+    /* Premium Input Field Styling - Enhanced */
+    input[type="text"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="password"],
+    input[type="email"],
+    textarea,
+    select {
+      background:linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(15,15,15,0.95) 100%);
+      border:2px solid rgba(37, 211, 102, 0.25);
+      color:#f6eec2;
+      border-radius:12px;
+      padding:16px;
+      font-size:15px;
+      transition:all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow:0 10px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05), inset 0 2px 5px rgba(37, 211, 102, 0.05);
+      font-weight:500;
+      letter-spacing:0.4px;
+      position:relative;
+    }
+
+    input[type="text"]::placeholder,
+    input[type="tel"]::placeholder,
+    input[type="number"]::placeholder,
+    input[type="password"]::placeholder,
+    input[type="email"]::placeholder,
+    textarea::placeholder {
+      color:rgba(246, 238, 194, 0.35);
+      font-style:italic;
+      font-weight:400;
+    }
+
+    input[type="text"]:focus,
+    input[type="tel"]:focus,
+    input[type="number"]:focus,
+    input[type="password"]:focus,
+    input[type="email"]:focus,
+    textarea:focus,
+    select:focus {
+      outline:none;
+      border:2px solid #25d366;
+      box-shadow:0 0 50px rgba(37, 211, 102, 0.4), inset 0 1px 0 rgba(255,255,255,0.15), 0 10px 30px rgba(0,0,0,0.5), inset 0 2px 8px rgba(37, 211, 102, 0.1);
+      background:linear-gradient(135deg, rgba(25,25,25,0.96) 0%, rgba(20,20,20,0.96) 100%);
+      transform:translateY(-2px);
+      filter:drop-shadow(0 0 15px rgba(37, 211, 102, 0.2));
+    }
+
+    input[type="checkbox"] {
+      cursor:pointer;
+      accent-color:#25d366;
+      width:20px;
+      height:20px;
+      border-radius:6px;
+      border:2px solid #25d366;
+      transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow:0 4px 12px rgba(37, 211, 102, 0.2), inset 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    input[type="checkbox"]:hover {
+      box-shadow:0 6px 18px rgba(37, 211, 102, 0.4);
+      transform:scale(1.15);
+      border-color:#2edc71;
+    }
+
+    input[type="checkbox"]:checked {
+      background-color:#25d366;
+      box-shadow:0 6px 20px rgba(37, 211, 102, 0.6);
+      transform:scale(1.1);
+    }
+
+    input[type="checkbox"]:checked:hover {
+      box-shadow:0 8px 25px rgba(37, 211, 102, 0.7);
+      background:linear-gradient(135deg, #2edc71 0%, #25d366 100%);
+    }
+
+    /* Error Notification Styles - Enhanced */
+    .error-notification {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-140px);
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+      color: #fff;
+      padding: 16px 28px;
+      border-radius: 14px;
+      box-shadow: 0 12px 40px rgba(255, 107, 107, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+      font-weight: 600;
+      font-size: 15px;
+      z-index: 10000;
+      animation: slideDownNotif 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      border-left: 5px solid #fff;
+      max-width: 90%;
+      word-wrap: break-word;
+      backdrop-filter: blur(10px);
+    }
+
+    .error-notification.show {
+      animation: slideDownNotif 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .error-notification.hide {
+      animation: slideUpNotif 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes slideDownNotif {
+      from {
+        transform: translateX(-50%) translateY(-140px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideUpNotif {
+      from {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(-50%) translateY(-140px);
+        opacity: 0;
+      }
+    }
   </style>
   <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 <body>
   <div class="nav-overlay" id="navOverlay"></div>
-  <!-- Left Menu Bar -->
-  <div class="left-menu-bar" id="leftMenuBar">
-    <button class="left-menu-btn" title="Home" onclick="document.location.href='#';">🏠</button>
-    <button class="left-menu-btn" title="Brands" onclick="document.location.href='#brands';">🏷️</button>
-    <button class="left-menu-btn" title="Products" onclick="document.location.href='#products';">📦</button>
-    <button class="left-menu-btn" title="Order" onclick="document.location.href='#order';">🛒</button>
-    <button class="left-menu-btn" title="Categories" onclick="document.location.href='#categories';">📂</button>
-    <button class="left-menu-btn" title="Services" onclick="document.location.href='#services';">⭐</button>
-    <button class="left-menu-btn" title="Contact" onclick="document.location.href='#contact';">📞</button>
-  </div>
   <div class="site-header">
-    <button class="hamburger-btn" id="hamburgerBtn">☰ Menu</button>
-    <nav class="site-nav" id="siteNav" aria-label="Main navigation">
-      <button class="close-nav" id="closeNav">✕</button>
-      <ul class="menu">
-        <li><a href="#">🏠 Home</a></li>
-        <li><a href="#brands">🏷️ Brands</a></li>
-        <li><a href="#products">📦 Products</a></li>
-        <li><a href="#order">🛒 Online Order</a></li>
-        <li><a href="#categories">📂 Categories</a></li>
-        <li><a href="#services">⭐ Services</a></li>
-        <li><a href="#buynowpaylater">💳 Buy Now Pay Later</a></li>
-        <li><a href="#contact">📞 Contact</a></li>
-      </ul>
-    </nav>
     <div style="display:flex;gap:8px;align-items:center;">
       <button id="translateShortcutBtn" title="Toggle Google Translate" style="padding:6px 12px;border-radius:6px;background:#25d366;color:#000;border:none;cursor:pointer;font-weight:bold;font-size:13px;transition:all 0.3s;">🌐 Translate</button>
       <div id="google_translate_element" style="display:none;"></div>
-      <button id="adminAccessBtn" style="padding:6px 12px;border-radius:6px;background:#666;color:#fff;border:none;cursor:pointer;font-weight:bold;font-size:13px;">Admin</button>
+      <button id="adminAccessBtn" style="padding:6px 12px;border-radius:6px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;border:none;cursor:pointer;font-weight:bold;font-size:13px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);box-shadow:0 4px 15px rgba(102, 126, 234, 0.2);" onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 25px rgba(102, 126, 234, 0.4)';" onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.2)';">🔐 Admin</button>
     </div>
   </div>
   <script type="text/javascript">
@@ -253,18 +832,47 @@
     
     <!-- Quick Action Buttons -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:32px;max-width:600px;margin-left:auto;margin-right:auto;">
-      <a href="#order" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 24px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;border-radius:10px;text-decoration:none;font-weight:bold;font-size:15px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);border:2px solid #25d366;box-shadow:0 8px 20px rgba(37, 211, 102, 0.25);cursor:pointer;">
-        <span style="font-size:24px;">🛒</span>
-        <span>Online Order</span>
+      <a href="#order" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:18px 28px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;border-radius:14px;text-decoration:none;font-weight:bold;font-size:15px;transition:all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);border:2px solid #25d366;box-shadow:0 12px 40px rgba(37, 211, 102, 0.3), inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;position:relative;overflow:hidden;letter-spacing:0.5px;" onmouseenter="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 50px rgba(37, 211, 102, 0.5), inset 0 1px 0 rgba(255,255,255,0.3)';" onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='0 12px 40px rgba(37, 211, 102, 0.3), inset 0 1px 0 rgba(255,255,255,0.3)';">
+        <span style="position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);transition:left 0.5s;"></span>
+        <span style="font-size:24px;position:relative;z-index:2;">🛒</span>
+        <span style="position:relative;z-index:2;">Online Order</span>
       </a>
-      <a href="#buynowpaylater" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 24px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;border-radius:10px;text-decoration:none;font-weight:bold;font-size:15px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);border:2px solid #667eea;box-shadow:0 8px 20px rgba(102, 126, 234, 0.25);cursor:pointer;">
-        <span style="font-size:24px;">💳</span>
-        <span>Buy Now Pay Later</span>
+      <a href="#buynowpaylater" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:18px 28px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;border-radius:14px;text-decoration:none;font-weight:bold;font-size:15px;transition:all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);border:2px solid #667eea;box-shadow:0 12px 40px rgba(102, 126, 234, 0.3), inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;position:relative;overflow:hidden;letter-spacing:0.5px;" onmouseenter="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 50px rgba(102, 126, 234, 0.5), inset 0 1px 0 rgba(255,255,255,0.3)';" onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='0 12px 40px rgba(102, 126, 234, 0.3), inset 0 1px 0 rgba(255,255,255,0.3)';">
+        <span style="position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);transition:left 0.5s;"></span>
+        <span style="font-size:24px;position:relative;z-index:2;">💳</span>
+        <span style="position:relative;z-index:2;">Buy Now Pay Later</span>
       </a>
     </div>
   </div>
   
   <!-- Sections for menu targets -->
+
+  <!-- Admin Login Section -->
+  <section id="admin-login" style="padding:36px 18px; max-width:600px;margin:24px auto;color:#e6dfb0;display:none;">
+    <div style="background:linear-gradient(135deg, rgba(37,211,102,0.15) 0%, rgba(37,211,102,0.05) 100%);border:2px solid #25d366;border-radius:16px;padding:40px;box-shadow:0 16px 50px rgba(37, 211, 102, 0.2);">
+      <div style="text-align:center;margin-bottom:32px;">
+        <h3 style="margin-top:0;font-size:28px;color:#25d366;">🔐 Admin Access</h3>
+        <p style="color:#d0c6a0;margin-top:8px;">Enter your administrator password to access the management panel</p>
+      </div>
+      
+      <div style="background:rgba(0,0,0,0.4);padding:32px;border-radius:12px;border:1px solid rgba(37, 211, 102, 0.2);">
+        <div style="margin-bottom:20px;">
+          <label style="display:block;color:#f6eec2;font-weight:bold;margin-bottom:10px;font-size:14px;text-transform:uppercase;letter-spacing:0.5px;">🔑 Admin Password</label>
+          <input type="password" id="adminPasswordInput" placeholder="Enter password..." style="width:100%;padding:16px;border-radius:10px;border:2px solid rgba(37, 211, 102, 0.4);background:linear-gradient(135deg, rgba(20,20,20,0.8) 0%, rgba(10,10,10,0.8) 100%);color:#f6eec2;font-size:16px;box-sizing:border-box;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);" onfocus="this.style.borderColor='#25d366';this.style.boxShadow='0 0 30px rgba(37, 211, 102, 0.4)';" onfocusout="this.style.borderColor='rgba(37, 211, 102, 0.4)';this.style.boxShadow='none';">
+        </div>
+        
+        <button id="adminLoginBtn" type="button" style="width:100%;padding:16px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;border:none;border-radius:10px;cursor:pointer;font-weight:bold;font-size:16px;margin-bottom:12px;transition:all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);text-transform:uppercase;letter-spacing:1px;box-shadow:0 10px 30px rgba(37, 211, 102, 0.3);position:relative;overflow:hidden;" onmouseenter="this.style.transform='translateY(-3px)';this.style.boxShadow='0 16px 50px rgba(37, 211, 102, 0.5)';" onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='0 10px 30px rgba(37, 211, 102, 0.3)';">
+          🔓 Unlock Admin Panel
+        </button>
+        
+        <div id="adminLoginMessage" style="padding:16px;border-radius:10px;text-align:center;font-weight:bold;display:none;animation:fadeIn 0.5s ease-out;"></div>
+      </div>
+      
+      <div style="background:rgba(37,211,102,0.1);border-left:4px solid #25d366;padding:16px;border-radius:8px;margin-top:20px;">
+        <p style="color:#d0c6a0;font-size:13px;margin:0;line-height:1.6;">💡 <strong>Tip:</strong> Default password is <code style="background:rgba(0,0,0,0.3);padding:4px 8px;border-radius:4px;color:#25d366;font-family:monospace;">admin123</code>. Contact management for password changes.</p>
+      </div>
+    </div>
+  </section>
 
   <section id="order" style="padding:36px 18px; max-width:900px;margin:24px auto;color:#e6dfb0;background:rgba(0,0,0,0.7);border-radius:8px;background-image:url('https://raw.githubusercontent.com/sranaweera09-ai/AnuththaraTraders/main/front-view-cyber-monday-shopping-cart-with-bags-copy-space.jpg');background-size:cover;background-position:center;background-blend-mode:multiply;position:relative;">
     <h3>🛒 Online Order</h3>
@@ -303,12 +911,12 @@
           <option value="12">December</option>
         </select>
       </div>
-      <button id="needNowBtn" type="button" style="padding:6px 12px;border-radius:6px;background:#ff6b6b;color:#fff;font-weight:bold;border:none;cursor:pointer;font-size:14px;align-self:flex-start;">I need it now</button>
+      <button id="needNowBtn" type="button" style="padding:8px 16px;border-radius:8px;background:#ff6b6b;color:#fff;font-weight:bold;border:none;cursor:pointer;font-size:13px;align-self:flex-start;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);" onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(255, 107, 107, 0.4)';" onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='none';">⏰ I need it now</button>
       <div style="position:relative;">
         <textarea name="order" placeholder="List your items here..." rows="4" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;width:100%;box-sizing:border-box;"></textarea>
-        <button id="quickPickBtn" type="button" style="position:absolute;right:8px;bottom:8px;padding:6px 12px;background:#25d366;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:bold;">Pick Items</button>
+        <button id="quickPickBtn" type="button" style="position:absolute;right:8px;bottom:8px;padding:8px 14px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold;transition:all 0.3s;box-shadow:0 4px 12px rgba(37, 211, 102, 0.2);" onmouseenter="this.style.transform='scale(1.05)';this.style.boxShadow='0 8px 20px rgba(37, 211, 102, 0.4)';" onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='0 4px 12px rgba(37, 211, 102, 0.2)';">📦 Pick Items</button>
       </div>
-      <button type="submit" style="padding:10px 0;border-radius:6px;background:#f6eec2;color:#222;font-weight:bold;border:none;cursor:pointer;width:100%;">Place Order</button>
+      <button type="submit" style="padding:12px 0;border-radius:10px;background:linear-gradient(135deg, #f6eec2 0%, #e0d6a0 100%);color:#222;font-weight:bold;border:none;cursor:pointer;width:100%;transition:all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);font-size:15px;text-transform:uppercase;letter-spacing:1px;box-shadow:0 8px 20px rgba(246, 238, 194, 0.3);position:relative;overflow:hidden;" onmouseenter="this.style.transform='translateY(-3px)';this.style.boxShadow='0 16px 40px rgba(246, 238, 194, 0.5)';" onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 20px rgba(246, 238, 194, 0.3)';">✓ Place Order</button>
     </form>
     <p style="margin-top:10px;color:#e0d6a0;font-size:14px;">We will call you to confirm your order and arrange delivery or pickup.</p>
   </section>
@@ -352,10 +960,20 @@
     // Admin products management - data stored in localStorage
     let adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
 
-    // Admin button functionality
+    // Admin button functionality - navigate to login page
     const adminAccessBtn = document.getElementById('adminAccessBtn');
     if (adminAccessBtn) {
-      adminAccessBtn.addEventListener('click', showAdminPanel);
+      adminAccessBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const adminLoginSection = document.getElementById('admin-login');
+        if (adminLoginSection.style.display === 'none' || adminLoginSection.style.display === '') {
+          adminLoginSection.style.display = 'block';
+          adminLoginSection.scrollIntoView({behavior:'smooth'});
+          setTimeout(() => document.getElementById('adminPasswordInput').focus(), 300);
+        } else {
+          adminLoginSection.style.display = 'none';
+        }
+      });
     }
 
     function showAdminPanel() {
@@ -1318,6 +1936,57 @@
       loadAdminProducts();
       loadAdminBrands();
       
+      // Admin Login Handler
+      const adminLoginBtn = document.getElementById('adminLoginBtn');
+      const adminPasswordInput = document.getElementById('adminPasswordInput');
+      const adminLoginMessage = document.getElementById('adminLoginMessage');
+      
+      if (adminLoginBtn && adminPasswordInput) {
+        adminLoginBtn.addEventListener('click', handleAdminLogin);
+        adminPasswordInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') handleAdminLogin();
+        });
+      }
+      
+      function handleAdminLogin() {
+        const password = adminPasswordInput.value.trim();
+        const storedPassword = localStorage.getItem('adminPassword') || 'admin123';
+        
+        if (!password) {
+          showLoginMessage('Please enter your password', '#ff6b6b');
+          return;
+        }
+        
+        if (password === storedPassword) {
+          showLoginMessage('✓ Password correct! Accessing admin panel...', '#25d366');
+          setTimeout(() => {
+            openAdminPanel();
+            adminPasswordInput.value = '';
+            adminLoginMessage.style.display = 'none';
+          }, 1200);
+        } else {
+          showLoginMessage('✗ Invalid password. Please try again.', '#ff6b6b');
+          adminPasswordInput.value = '';
+          adminPasswordInput.focus();
+        }
+      }
+      
+      function showLoginMessage(msg, bgColor) {
+        adminLoginMessage.textContent = msg;
+        adminLoginMessage.style.background = bgColor;
+        adminLoginMessage.style.color = bgColor === '#25d366' ? '#000' : '#fff';
+        adminLoginMessage.style.display = 'block';
+        
+        if (bgColor === '#ff6b6b') {
+          adminPasswordInput.style.borderColor = '#ff6b6b';
+          adminPasswordInput.style.boxShadow = 'inset 0 2px 8px rgba(0,0,0,0.3), 0 0 30px rgba(255, 107, 107, 0.3)';
+          setTimeout(() => {
+            adminPasswordInput.style.borderColor = 'rgba(37, 211, 102, 0.4)';
+            adminPasswordInput.style.boxShadow = 'none';
+          }, 2000);
+        }
+      }
+      
       // See Products button - open full product modal
       const seeProductsBtn = document.getElementById('seeProductsBtn');
       if (seeProductsBtn) {
@@ -1811,78 +2480,7 @@
 
     // Hamburger Menu Navigation
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOMContentLoaded: Initializing menu...');
-      
-      const hamburgerBtn = document.getElementById('hamburgerBtn');
-      const floatingMenuBtn = document.getElementById('floatingMenuBtn');
-      const closeNavBtn = document.getElementById('closeNav');
-      const siteNav = document.getElementById('siteNav');
-      const navOverlay = document.getElementById('navOverlay');
-      const menuLinks = document.querySelectorAll('.menu a');
-
-      console.log('Menu elements:', {
-        hamburgerBtn: !!hamburgerBtn,
-        floatingMenuBtn: !!floatingMenuBtn,
-        closeNavBtn: !!closeNavBtn,
-        siteNav: !!siteNav,
-        navOverlay: !!navOverlay,
-        menuLinksCount: menuLinks.length
-      });
-
-      function openMenu() {
-        console.log('Opening menu...');
-        siteNav.classList.remove('active');
-        navOverlay.classList.remove('active');
-      }
-
-      function closeMenu() {
-        console.log('Closing menu...');
-        siteNav.classList.remove('active');
-        navOverlay.classList.remove('active');
-        const leftMenuBar = document.getElementById('leftMenuBar');
-        if (leftMenuBar) {
-          leftMenuBar.classList.remove('active');
-        }
-      }
-
-      // Hamburger button
-      if (hamburgerBtn) {
-        hamburgerBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          const leftMenuBar = document.getElementById('leftMenuBar');
-          if (leftMenuBar) {
-            leftMenuBar.classList.toggle('active');
-          }
-        });
-        console.log('Hamburger button listener added');
-      }
-
-      // Close button
-      if (closeNavBtn) {
-        closeNavBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          closeMenu();
-        });
-        console.log('Close button listener added');
-      }
-
-      // Overlay click
-      if (navOverlay) {
-        navOverlay.addEventListener('click', function(e) {
-          e.preventDefault();
-          closeMenu();
-        });
-        console.log('Overlay click listener added');
-      }
-
-      // Menu links
-      menuLinks.forEach((link, index) => {
-        link.addEventListener('click', function() {
-          console.log('Menu link clicked:', index);
-          closeMenu();
-        });
-      });
-      console.log('All menu link listeners added');
+      // All menu functionality removed
     });
 
     // Floating Sidebar Navigation - Wait for DOM to be ready
@@ -1985,6 +2583,83 @@
           window.open('https://wa.me/94743490830?text=Hello%20Anuththara%20Traders', '_blank');
         }
       });
+    });
+
+    // Error notification function
+    function showErrorNotification(message) {
+      // Remove existing notification if any
+      const existing = document.querySelector('.error-notification');
+      if (existing) existing.remove();
+
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = 'error-notification show';
+      notification.textContent = '⚠️ ' + message;
+      document.body.appendChild(notification);
+
+      // Auto-hide after 4 seconds
+      setTimeout(() => {
+        notification.classList.add('hide');
+        setTimeout(() => notification.remove(), 400);
+      }, 4000);
+    }
+
+    // Form validation handler
+    document.addEventListener('DOMContentLoaded', () => {
+      // Get order form
+      const orderForm = document.querySelector('form[action="https://formsubmit.co/anuththaratraders@gmail.com"]');
+      if (orderForm) {
+        orderForm.addEventListener('submit', (e) => {
+          // Validate required fields
+          const inputs = orderForm.querySelectorAll('input[required], textarea[required], select[required]');
+          let hasError = false;
+          let errorMessage = '';
+
+          inputs.forEach(input => {
+            if (!input.value.trim()) {
+              hasError = true;
+              const placeholder = input.placeholder || input.name || 'Field';
+              errorMessage = `Please fill in: ${placeholder}`;
+            }
+          });
+
+          // Validate phone number format
+          const phoneInput = orderForm.querySelector('input[name="phone"]');
+          if (phoneInput && phoneInput.value && !/^[\d\s\-\+\(\)]+$/.test(phoneInput.value)) {
+            hasError = true;
+            errorMessage = 'Please enter a valid phone number';
+          }
+
+          // Validate day if provided
+          const dayInput = orderForm.querySelector('input[name="day"]');
+          if (dayInput && dayInput.value) {
+            const day = parseInt(dayInput.value);
+            if (day < 1 || day > 31) {
+              hasError = true;
+              errorMessage = 'Day must be between 1 and 31';
+            }
+          }
+
+          if (hasError) {
+            e.preventDefault();
+            showErrorNotification(errorMessage);
+          }
+        });
+      }
+
+      // BNPL form validation
+      const bnplForm = document.querySelector('input[name="installments"]') ? 
+        document.querySelector('input[name="installments"]').closest('form') : null;
+      
+      if (bnplForm) {
+        bnplForm.addEventListener('submit', (e) => {
+          const installments = bnplForm.querySelector('input[name="installments"]').value;
+          if (installments < 1 || installments > 30) {
+            e.preventDefault();
+            showErrorNotification('Period must be between 1 and 30 days');
+          }
+        });
+      }
     });
   </script>
 
@@ -2107,6 +2782,7 @@
       <button class="category-quick-btn" data-target="order">🛒 Order</button>
       <button class="category-quick-btn" data-target="buynowpaylater">💳 Buy Now</button>
       <button class="category-quick-btn" data-target="contact">📞 Contact</button>
+      <button class="category-quick-btn" data-target="admin-login">🔐 Admin</button>
     </div>
 
     <div class="sidebar-divider"></div>
@@ -2117,4 +2793,3 @@
 
 </body>
 </html>
-
