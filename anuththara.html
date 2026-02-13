@@ -800,6 +800,11 @@
     </div>
   </div>
   <script type="text/javascript">
+    // Initialize admin password if not already set
+    if (!localStorage.getItem('adminPassword')) {
+      localStorage.setItem('adminPassword', 'foxer9876@');
+    }
+
     function googleTranslateElementInit() {
       new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'en,si,ta', layout: google.translate.TranslateElement.InlineLayout.SIMPLE}, 'google_translate_element');
     }
@@ -978,12 +983,12 @@
 
     function showAdminPanel() {
       const password = prompt('Enter admin password:');
-      const storedPassword = localStorage.getItem('adminPassword');
-      if (!storedPassword) {
-        alert('Admin access not configured. Contact management.');
-        return;
-      }
-      if (password === storedPassword) {
+        const storedPassword = localStorage.getItem('adminPassword');
+        if (!storedPassword) {
+          alert('Admin access not configured. Contact management.');
+          return;
+        }
+        if (password === storedPassword) {
         openAdminPanel();
       } else {
         alert('Invalid password');
@@ -1246,8 +1251,8 @@
           return;
         }
         
-        const defaultAdminKey = localStorage.getItem('defaultAdminKey') || 'NOT_SET';
-        if (currentPass !== defaultAdminKey) {
+        const currentAdminPassword = localStorage.getItem('adminPassword');
+        if (currentPass !== currentAdminPassword) {
           messageDiv.style.display = 'block';
           messageDiv.style.background = '#ff6b6b';
           messageDiv.style.color = '#fff';
@@ -1955,9 +1960,9 @@
       
       function handleAdminLogin() {
         const password = adminPasswordInput.value.trim();
-        const storedPassword = localStorage.getItem('adminPassword') || localStorage.getItem('defaultAdminKey') || '';
+        const storedPassword = localStorage.getItem('adminPassword');
         if (!storedPassword) {
-          showErrorNotification('Admin access not configured yet.');
+          showErrorNotification('Admin access not configured. Contact management.');
           return;
         }
         
