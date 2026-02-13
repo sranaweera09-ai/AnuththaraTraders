@@ -869,7 +869,7 @@
       </div>
       
       <div style="background:rgba(37,211,102,0.1);border-left:4px solid #25d366;padding:16px;border-radius:8px;margin-top:20px;">
-        <p style="color:#d0c6a0;font-size:13px;margin:0;line-height:1.6;">💡 <strong>Tip:</strong> Default password is <code style="background:rgba(0,0,0,0.3);padding:4px 8px;border-radius:4px;color:#25d366;font-family:monospace;">admin123</code>. Contact management for password changes.</p>
+        <p style="color:#d0c6a0;font-size:13px;margin:0;line-height:1.6;">� <strong>Note:</strong> Contact the management team for admin access credentials.</p>
       </div>
     </div>
   </section>
@@ -978,7 +978,11 @@
 
     function showAdminPanel() {
       const password = prompt('Enter admin password:');
-      const storedPassword = localStorage.getItem('adminPassword') || 'admin123';
+      const storedPassword = localStorage.getItem('adminPassword');
+      if (!storedPassword) {
+        alert('Admin access not configured. Contact management.');
+        return;
+      }
       if (password === storedPassword) {
         openAdminPanel();
       } else {
@@ -1242,7 +1246,8 @@
           return;
         }
         
-        if (currentPass !== 'admin123') {
+        const defaultAdminKey = localStorage.getItem('defaultAdminKey') || 'NOT_SET';
+        if (currentPass !== defaultAdminKey) {
           messageDiv.style.display = 'block';
           messageDiv.style.background = '#ff6b6b';
           messageDiv.style.color = '#fff';
@@ -1950,7 +1955,11 @@
       
       function handleAdminLogin() {
         const password = adminPasswordInput.value.trim();
-        const storedPassword = localStorage.getItem('adminPassword') || 'admin123';
+        const storedPassword = localStorage.getItem('adminPassword') || localStorage.getItem('defaultAdminKey') || '';
+        if (!storedPassword) {
+          showErrorNotification('Admin access not configured yet.');
+          return;
+        }
         
         if (!password) {
           showLoginMessage('Please enter your password', '#ff6b6b');
