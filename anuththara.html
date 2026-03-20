@@ -1207,18 +1207,22 @@
         document.getElementById('productsTabContent').style.display = 'block';
         document.getElementById('brandsTabContent').style.display = 'none';
         document.getElementById('historyTabContent').style.display = 'none';
+        document.getElementById('settingsTabContent').style.display = 'none';
         document.getElementById('productsTab').style.background = '#25d366';
         document.getElementById('brandsTab').style.background = '#444';
         document.getElementById('historyTab').style.background = '#444';
+        document.getElementById('settingsTab').style.background = '#444';
       });
 
       document.getElementById('brandsTab').addEventListener('click', () => {
         document.getElementById('productsTabContent').style.display = 'none';
         document.getElementById('brandsTabContent').style.display = 'block';
         document.getElementById('historyTabContent').style.display = 'none';
+        document.getElementById('settingsTabContent').style.display = 'none';
         document.getElementById('productsTab').style.background = '#444';
         document.getElementById('brandsTab').style.background = '#25d366';
         document.getElementById('historyTab').style.background = '#444';
+        document.getElementById('settingsTab').style.background = '#444';
       });
 
       document.getElementById('historyTab').addEventListener('click', () => {
