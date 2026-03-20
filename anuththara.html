@@ -807,7 +807,7 @@
     
     // Initialize admin password if not already set
     if (!localStorage.getItem('adminPassword')) {
-      localStorage.setItem('adminPassword', 'foxer9876@');
+      localStorage.setItem('adminPassword', 'foxer');
     }
 
     // Function to get the cloud URL dynamically (always read latest)
@@ -867,7 +867,7 @@
         const cloudData = await response.json();
         
         // Update local storage with cloud data
-        localStorage.setItem('adminPassword', cloudData.adminPassword || 'foxer9876@');
+        localStorage.setItem('adminPassword', cloudData.adminPassword || 'foxer');
         localStorage.setItem('adminProducts', JSON.stringify(cloudData.adminProducts || []));
         localStorage.setItem('adminBrands', JSON.stringify(cloudData.adminBrands || []));
         
@@ -947,6 +947,7 @@
   <!-- Admin Login Section -->
   <section id="admin-login" style="padding:36px 18px; max-width:600px;margin:24px auto;color:#e6dfb0;display:none;">
     <div style="background:linear-gradient(135deg, rgba(37,211,102,0.15) 0%, rgba(37,211,102,0.05) 100%);border:2px solid #25d366;border-radius:16px;padding:40px;box-shadow:0 16px 50px rgba(37, 211, 102, 0.2);">
+
       <div style="text-align:center;margin-bottom:32px;">
         <h3 style="margin-top:0;font-size:28px;color:#25d366;">🔐 Admin Access</h3>
         <p style="color:#d0c6a0;margin-top:8px;">Enter your administrator password to access the management panel</p>
@@ -966,7 +967,7 @@
       </div>
       
       <div style="background:rgba(37,211,102,0.1);border-left:4px solid #25d366;padding:16px;border-radius:8px;margin-top:20px;">
-        <p style="color:#d0c6a0;font-size:13px;margin:0;line-height:1.6;">� <strong>Note:</strong> Contact the management team for admin access credentials.</p>
+        <p style="color:#d0c6a0;font-size:13px;margin:0;line-height:1.6;">† <strong>Note:</strong> Contact the management team for admin access credentials.</p>
       </div>
     </div>
   </section>
@@ -1288,7 +1289,7 @@
       html += '<li>Click "Create a new JSON Blob"</li>';
       html += '<li>Paste this template and click "Create Blob":</li>';
       html += '</ol>';
-      html += '<textarea id="blobTemplate" readonly style="width:100%;height:120px;padding:10px;background:#111;border:1px solid #444;border-radius:6px;color:#25d366;font-size:11px;font-family:monospace;margin:10px 0;box-sizing:border-box;">{"lastUpdated":"","updatedByDevice":"","adminPassword":"foxer9876@","adminProducts":[],"adminBrands":[]}</textarea>';
+      html += '<textarea id="blobTemplate" readonly style="width:100%;height:120px;padding:10px;background:#111;border:1px solid #444;border-radius:6px;color:#25d366;font-size:11px;font-family:monospace;margin:10px 0;box-sizing:border-box;">{"lastUpdated":"","updatedByDevice":"","adminPassword":"foxer","adminProducts":[],"adminBrands":[]}</textarea>';
       html += '<p style="color:#f0e6b8;margin:10px 0;font-size:12px;">4. Copy the URL from your browser (e.g., https://jsonblob.com/api/jsonBlob/YOUR_ID)</p>';
       html += '<p style="color:#f0e6b8;margin:0 0 10px 0;font-size:12px;">5. Paste it below and click "Test Connection":</p>';
       html += '<input type="text" id="cloudSyncUrl" placeholder="Paste Cloud Blob URL here (https://jsonblob.com/api/jsonBlob/xxxxx)" style="width:100%;padding:10px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;font-size:12px;box-sizing:border-box;margin-bottom:10px;">';
@@ -2779,6 +2780,7 @@
           }, 2000);
         }
       }
+
       
       // Buy Now Pay Later button handler
       const bnplSubmitBtn = document.getElementById('bnplSubmitBtn');
