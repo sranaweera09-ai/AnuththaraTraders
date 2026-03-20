@@ -821,33 +821,45 @@
     // Sync data to Supabase
     async function syncToCloud() {
       try {
+        console.log('📤 Starting sync to Supabase...');
+        console.log('Device ID:', DEVICE_ID);
+        
         const adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
         const adminBrands = JSON.parse(localStorage.getItem('adminBrands') || '[]');
         const bnplHistory = JSON.parse(localStorage.getItem('bnplHistory') || '[]');
         
-        console.log('📤 Syncing to Supabase... Products:', adminProducts.length, 'Brands:', adminBrands.length);
+        console.log('📤 Data to sync - Products:', adminProducts.length, 'Brands:', adminBrands.length);
+        
+        const updateData = {
+          admin_password: localStorage.getItem('adminPassword'),
+          admin_products: adminProducts,
+          admin_brands: adminBrands,
+          bnpl_history: bnplHistory,
+          updated_at: new Date().toISOString(),
+          updated_by_device: DEVICE_ID
+        };
+        
+        console.log('Sending update data:', JSON.stringify(updateData).substring(0, 200) + '...');
         
         const { data, error } = await supabase
           .from('app_data')
-          .update({
-            admin_password: localStorage.getItem('adminPassword'),
-            admin_products: adminProducts,
-            admin_brands: adminBrands,
-            bnpl_history: bnplHistory,
-            updated_at: new Date().toISOString(),
-            updated_by_device: DEVICE_ID
-          })
+          .update(updateData)
           .eq('id', 1);
         
         if (error) {
-          console.error('❌ Sync to Supabase failed:', error.message);
+          console.error('❌ Supabase Error Code:', error.code);
+          console.error('❌ Supabase Error Message:', error.message);
+          console.error('❌ Full Error:', error);
+          alert('❌ Sync Failed: ' + error.message + '\n\nCheck browser console for details');
           return false;
         }
         
-        console.log('✅ Data synced to Supabase');
+        console.log('✅ Data synced to Supabase successfully');
+        console.log('Response data:', data);
         return true;
       } catch (error) {
-        console.error('❌ Sync failed:', error.message);
+        console.error('❌ Sync exception:', error);
+        alert('❌ Sync Error: ' + error.message);
         return false;
       }
     }
@@ -855,7 +867,7 @@
     // Fetch data from Supabase
     async function syncFromCloud() {
       try {
-        console.log('📥 Fetching data from Supabase...');
+        console.log('📥 Starting fetch from Supabase...');
         
         const { data, error } = await supabase
           .from('app_data')
@@ -864,59 +876,98 @@
           .single();
         
         if (error) {
-          console.error('❌ Fetch from Supabase failed:', error.message);
+          console.error('❌ Fetch Error Code:', error.code);
+          console.error('❌ Fetch Error Message:', error.message);
+          console.error('❌ Full Error:', error);
           return false;
         }
         
-        // Update local storage with cloud data
-        localStorage.setItem('adminPassword', data.admin_password || 'foxer');
-        localStorage.setItem('adminProducts', JSON.stringify(data.admin_products || []));
-        localStorage.setItem('adminBrands', JSON.stringify(data.admin_brands || []));
-        localStorage.setItem('bnplHistory', JSON.stringify(data.bnpl_history || []));
+        console.log('✅ Data fetched from Supabase:', data);
         
-        console.log('✅ Data synced from Supabase');
+        // Update local storage with cloud data
+        if (data) {
+          localStorage.setItem('adminPassword', data.admin_password || 'foxer');
+          localStorage.setItem('adminProducts', JSON.stringify(data.admin_products || []));
+          localStorage.setItem('adminBrands', JSON.stringify(data.admin_brands || []));
+          localStorage.setItem('bnplHistory', JSON.stringify(data.bnpl_history || []));
+          console.log('✅ Local storage updated from Supabase');
+        }
+        
         return true;
       } catch (error) {
-        console.error('❌ Fetch failed:', error.message);
+        console.error('❌ Fetch exception:', error);
         return false;
       }
     }
 
     // Set up real-time listener for changes from other devices
     function setupRealtimeSync() {
-      console.log('🔄 Setting up real-time sync...');
+      console.log('🔄 Setting up real-time sync with Supabase...');
+      console.log('Device ID:', DEVICE_ID);
       
-      supabase
+      const subscription = supabase
         .channel('app_data_changes')
         .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'app_data' },
-          async (payload) => {
+          (payload) => {
+            console.log('📨 Received update from Supabase:', payload);
+            console.log('Updated by device:', payload.new.updated_by_device, 'Current device:', DEVICE_ID);
+            
             // Only update if change came from different device
-            if (payload.new.updated_by_device !== DEVICE_ID) {
-              console.log('🔄 Received update from another device, refreshing...');
+            if (payload.new && payload.new.updated_by_device !== DEVICE_ID) {
+              console.log('🔄 Change from different device detected, updating local data...');
               
-              // Update local storage
-              localStorage.setItem('adminPassword', payload.new.admin_password || 'foxer');
-              localStorage.setItem('adminProducts', JSON.stringify(payload.new.admin_products || []));
-              localStorage.setItem('adminBrands', JSON.stringify(payload.new.admin_brands || []));
-              localStorage.setItem('bnplHistory', JSON.stringify(payload.new.bnpl_history || []));
-              
-              // Refresh UI
-              if (window.displayProducts) displayProducts();
-              if (window.loadAdminBrands) loadAdminBrands();
-              
-              console.log('✅ UI updated with latest data');
+              try {
+                // Update local storage
+                localStorage.setItem('adminPassword', payload.new.admin_password || 'foxer');
+                localStorage.setItem('adminProducts', JSON.stringify(payload.new.admin_products || []));
+                localStorage.setItem('adminBrands', JSON.stringify(payload.new.admin_brands || []));
+                localStorage.setItem('bnplHistory', JSON.stringify(payload.new.bnpl_history || []));
+                
+                console.log('✅ Local storage updated');
+                
+                // Refresh UI
+                if (window.displayProducts) {
+                  displayProducts();
+                  console.log('✅ Products display refreshed');
+                }
+                if (window.loadAdminBrands) {
+                  loadAdminBrands();
+                  console.log('✅ Brands display refreshed');
+                }
+                
+                console.log('✅ UI updated with latest data from another device');
+              } catch (err) {
+                console.error('❌ Error updating UI:', err);
+              }
+            } else {
+              console.log('ℹ️ Change is from same device, ignoring');
             }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('📡 Real-time subscription status:', status);
+        });
+      
+      console.log('✅ Real-time listener setup complete');
     }
 
     // Sync from cloud on page load
     window.addEventListener('DOMContentLoaded', async () => {
-      console.log('📱 Page loading, syncing from Supabase...');
-      await syncFromCloud();
+      console.log('📱 Page loading, initializing Supabase sync...');
+      try {
+        const success = await syncFromCloud();
+        if (success) {
+          console.log('✅ Initial sync from Supabase succeeded');
+        } else {
+          console.warn('⚠️ Initial sync from Supabase failed');
+        }
+      } catch (err) {
+        console.error('❌ Error during initial sync:', err);
+      }
+      
       setupRealtimeSync(); // Start listening for real-time updates
+      
       // Reload products after syncing
       if (window.displayProducts) {
         displayProducts();
@@ -3705,4 +3756,3 @@
 
 </body>
 </html>
-
