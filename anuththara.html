@@ -798,6 +798,8 @@
     <div style="display:flex;gap:8px;align-items:center;">
       <button id="translateShortcutBtn" title="Toggle Google Translate" style="padding:6px 12px;border-radius:6px;background:#25d366;color:#000;border:none;cursor:pointer;font-weight:bold;font-size:13px;transition:all 0.3s;">🌐 Translate</button>
       <div id="google_translate_element" style="display:none;"></div>
+      <button id="syncRefreshBtn" title="Manually refresh data from cloud" style="padding:6px 12px;border-radius:6px;background:#667eea;color:#fff;border:none;cursor:pointer;font-weight:bold;font-size:13px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);box-shadow:0 4px 15px rgba(102, 126, 234, 0.2);">🔄 Sync Now</button>
+      <div id="syncStatus" style="padding:6px 12px;border-radius:6px;background:rgba(37,211,102,0.2);color:#25d366;border:1px solid #25d366;font-weight:bold;font-size:12px;min-width:140px;text-align:center;opacity:0.5; transition: opacity 0.3s;">🔄 Connecting...</div>
       <button id="adminAccessBtn" style="padding:6px 12px;border-radius:6px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;border:none;cursor:pointer;font-weight:bold;font-size:13px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);box-shadow:0 4px 15px rgba(102, 126, 234, 0.2);" onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 25px rgba(102, 126, 234, 0.4)';" onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.2)';">🔐 Admin</button>
     </div>
   </div>
@@ -818,41 +820,68 @@
       localStorage.setItem('adminPassword', 'foxer');
     }
 
-    // Sync data to Supabase
+    // Sync data to Supabase (with INSERT fallback if row doesn't exist)
     async function syncToCloud() {
       try {
         const adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
         const adminBrands = JSON.parse(localStorage.getItem('adminBrands') || '[]');
         const bnplHistory = JSON.parse(localStorage.getItem('bnplHistory') || '[]');
         
-        console.log('📤 Syncing to Supabase... Products:', adminProducts.length, 'Brands:', adminBrands.length);
+        console.log('📤 Starting sync to Supabase...');
+        console.log('Sending update data: Products(' + adminProducts.length + '), Brands(' + adminBrands.length + '), BNPL(' + bnplHistory.length + ')');
         
-        const { data, error } = await supabase
+        const syncData = {
+          id: 1,
+          admin_password: localStorage.getItem('adminPassword'),
+          admin_products: adminProducts,
+          admin_brands: adminBrands,
+          bnpl_history: bnplHistory,
+          updated_at: new Date().toISOString(),
+          updated_by_device: DEVICE_ID
+        };
+        
+        // First try to update
+        const { data: updateData, error: updateError } = await supabase
           .from('app_data')
-          .update({
-            admin_password: localStorage.getItem('adminPassword'),
-            admin_products: adminProducts,
-            admin_brands: adminBrands,
-            bnpl_history: bnplHistory,
-            updated_at: new Date().toISOString(),
-            updated_by_device: DEVICE_ID
-          })
-          .eq('id', 1);
+          .update(syncData)
+          .eq('id', 1)
+          .select();
         
-        if (error) {
-          console.error('❌ Sync to Supabase failed:', error.message);
+        // If update didn't affect any rows, insert instead
+        if (!updateError && (!updateData || updateData.length === 0)) {
+          console.log('⚠️ Row id=1 not found, creating new row...');
+          const { data: insertData, error: insertError } = await supabase
+            .from('app_data')
+            .insert([syncData])
+            .select();
+          
+          if (insertError) {
+            console.error('❌ Insert failed:', insertError.message);
+            updateSyncStatus('❌ Sync failed: ' + insertError.message);
+            return false;
+          }
+          console.log('✅ Data inserted to Supabase successfully');
+          updateSyncStatus('✅ Synced (new row created)');
+          return true;
+        }
+        
+        if (updateError) {
+          console.error('❌ Sync to Supabase failed:', updateError.message);
+          updateSyncStatus('❌ Sync failed: ' + updateError.message);
           return false;
         }
         
-        console.log('✅ Data synced to Supabase');
+        console.log('✅ Data synced to Supabase successfully');
+        updateSyncStatus('✅ Synced now');
         return true;
       } catch (error) {
         console.error('❌ Sync failed:', error.message);
+        updateSyncStatus('❌ Sync error: ' + error.message);
         return false;
       }
     }
 
-    // Fetch data from Supabase
+    // Fetch data from Supabase (with initialization if needed)
     async function syncFromCloud() {
       try {
         console.log('📥 Fetching data from Supabase...');
@@ -864,6 +893,33 @@
           .single();
         
         if (error) {
+          // If row doesn't exist, create it with current local data
+          if (error.message.includes('not found') || error.code === 'PGRST116') {
+            console.log('⚠️ Row not found in cloud, initializing with local data...');
+            const adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
+            const adminBrands = JSON.parse(localStorage.getItem('adminBrands') || '[]');
+            const bnplHistory = JSON.parse(localStorage.getItem('bnplHistory') || '[]');
+            
+            const { insertError } = await supabase
+              .from('app_data')
+              .insert([{
+                id: 1,
+                admin_password: localStorage.getItem('adminPassword') || 'foxer',
+                admin_products: adminProducts,
+                admin_brands: adminBrands,
+                bnpl_history: bnplHistory,
+                updated_at: new Date().toISOString(),
+                updated_by_device: DEVICE_ID
+              }]);
+            
+            if (insertError) {
+              console.error('❌ Failed to initialize cloud data:', insertError.message);
+            } else {
+              console.log('✅ Cloud data initialized');
+            }
+            return false;
+          }
+          
           console.error('❌ Fetch from Supabase failed:', error.message);
           return false;
         }
@@ -882,18 +938,34 @@
       }
     }
 
+    // Update sync status indicator
+    function updateSyncStatus(message) {
+      const statusEl = document.getElementById('syncStatus');
+      if (statusEl) {
+        statusEl.textContent = message;
+        statusEl.style.opacity = '1';
+        setTimeout(() => {
+          statusEl.style.opacity = '0.5';
+        }, 2000);
+      }
+    }
+
     // Set up real-time listener for changes from other devices
     function setupRealtimeSync() {
       console.log('🔄 Setting up real-time sync...');
+      updateSyncStatus('🔄 Connected');
       
       supabase
         .channel('app_data_changes')
         .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'app_data' },
           async (payload) => {
+            console.log('📨 Received real-time update from Supabase, device:', payload.new.updated_by_device, 'Current device:', DEVICE_ID);
+            
             // Only update if change came from different device
-            if (payload.new.updated_by_device !== DEVICE_ID) {
-              console.log('🔄 Received update from another device, refreshing...');
+            if (payload.new && payload.new.updated_by_device !== DEVICE_ID) {
+              console.log('🔄 Update from different device detected, refreshing UI...');
+              updateSyncStatus('🔄 Syncing from another device...');
               
               // Update local storage
               localStorage.setItem('adminPassword', payload.new.admin_password || 'foxer');
@@ -901,35 +973,65 @@
               localStorage.setItem('adminBrands', JSON.stringify(payload.new.admin_brands || []));
               localStorage.setItem('bnplHistory', JSON.stringify(payload.new.bnpl_history || []));
               
-              // Refresh UI
-              if (window.displayProducts) displayProducts();
-              if (window.loadAdminBrands) loadAdminBrands();
+              console.log('✅ Local storage updated with remote changes');
               
-              console.log('✅ UI updated with latest data');
+              // Refresh UI with slight delay to ensure localStorage is updated
+              setTimeout(() => {
+                if (typeof window.displayProducts === 'function') {
+                  console.log('Calling displayProducts()...');
+                  window.displayProducts();
+                }
+                if (typeof window.loadAdminBrands === 'function') {
+                  console.log('Calling loadAdminBrands()...');
+                  window.loadAdminBrands();
+                }
+                updateSyncStatus('✅ Synced successfully');
+                console.log('✅ UI refreshed with latest data');
+              }, 100);
+            } else {
+              console.log('ℹ️ Update from same device, skipping refresh');
             }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('📡 Real-time subscription status:', status);
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Real-time sync is active and listening');
+            updateSyncStatus('✅ Listening for updates');
+          }
+        });
     }
 
     // Sync from cloud on page load
     window.addEventListener('DOMContentLoaded', async () => {
-      console.log('📱 Page loading, syncing from Supabase...');
+      console.log('📱 Page loading, Device ID:', DEVICE_ID);
+      console.log('📤 Attempting to sync from Supabase...');
       await syncFromCloud();
       setupRealtimeSync(); // Start listening for real-time updates
       // Reload products after syncing
-      if (window.displayProducts) {
-        displayProducts();
-      }
-      if (window.loadAdminBrands) {
-        loadAdminBrands();
-      }
+      setTimeout(() => {
+        if (typeof window.displayProducts === 'function') {
+          console.log('Displaying products on page load...');
+          window.displayProducts();
+        }
+        if (typeof window.loadAdminBrands === 'function') {
+          console.log('Loading brands on page load...');
+          window.loadAdminBrands();
+        }
+      }, 200);
     });
     
     // Auto-sync whenever admin data changes
     function markDataForCloudSync() {
+      console.log('Marking data for cloud sync...');
       setTimeout(syncToCloud, 100);
     }
+    
+    // Expose functions to global scope
+    window.syncToCloud = syncToCloud;
+    window.syncFromCloud = syncFromCloud;
+    window.markDataForCloudSync = markDataForCloudSync;
+    window.updateSyncStatus = updateSyncStatus;
 
     // ==================== END CLOUD SYNC ====================
 
@@ -941,6 +1043,29 @@
     document.addEventListener('DOMContentLoaded', function() {
       const translateBtn = document.getElementById('translateShortcutBtn');
       const translateElement = document.getElementById('google_translate_element');
+      const syncRefreshBtn = document.getElementById('syncRefreshBtn');
+      
+      if (syncRefreshBtn) {
+        syncRefreshBtn.addEventListener('click', async function() {
+          console.log('🔄 Manual sync triggered by user');
+          updateSyncStatus('🔄 Syncing...');
+          syncRefreshBtn.disabled = true;
+          syncRefreshBtn.style.opacity = '0.5';
+          
+          await syncFromCloud();
+          setTimeout(() => {
+            if (typeof window.displayProducts === 'function') {
+              window.displayProducts();
+            }
+            if (typeof window.loadAdminBrands === 'function') {
+              window.loadAdminBrands();
+            }
+            updateSyncStatus('✅ Refreshed');
+            syncRefreshBtn.disabled = false;
+            syncRefreshBtn.style.opacity = '1';
+          }, 100);
+        });
+      }
       
       if (translateBtn && translateElement) {
         translateBtn.addEventListener('click', function() {
@@ -1624,15 +1749,43 @@
       });
 
       // Add product button
-      document.getElementById('addProductBtn').addEventListener('click', () => {
-        const name = document.getElementById('productName').value.trim();
-        const category = document.getElementById('productCategory').value;
-        const brand = document.getElementById('productBrand').value;
-        const price = parseFloat(document.getElementById('productPrice').value);
-        const stock = parseInt(document.getElementById('productStock').value);
-        const imageInput = document.getElementById('productImage');
+      document.getElementById('addProductBtn').addEventListener('click', async () => {
+        try {
+          const name = document.getElementById('productName').value.trim();
+          const category = document.getElementById('productCategory').value;
+          const brand = document.getElementById('productBrand').value;
+          const price = parseFloat(document.getElementById('productPrice').value);
+          const stock = parseInt(document.getElementById('productStock').value);
+          const imageInput = document.getElementById('productImage');
 
-        if (name && category && brand && price >= 0 && stock >= 0) {
+          // Validation
+          if (!name) {
+            alert('❌ Product name is required');
+            return;
+          }
+          if (!category) {
+            alert('❌ Product category is required');
+            return;
+          }
+          if (!brand) {
+            alert('❌ Product brand is required');
+            return;
+          }
+          if (isNaN(price) || price < 0) {
+            alert('❌ Price must be a valid number >= 0');
+            return;
+          }
+          if (isNaN(stock) || stock < 0) {
+            alert('❌ Stock must be a valid number >= 0');
+            return;
+          }
+
+          // Show loading state
+          const btn = document.getElementById('addProductBtn');
+          const originalText = btn.textContent;
+          btn.textContent = '⏳ Adding...';
+          btn.disabled = true;
+
           // Load current products
           let adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
           
@@ -1640,16 +1793,65 @@
           if (imageInput.files.length > 0) {
             const file = imageInput.files[0];
             const reader = new FileReader();
-            reader.onload = function(e) {
-              const newProduct = {name, category, brand, price, stock, image: e.target.result};
+            reader.onload = async function(e) {
+              try {
+                const newProduct = {name, category, brand, price, stock, image: e.target.result};
+                adminProducts.push(newProduct);
+                localStorage.setItem('adminProducts', JSON.stringify(adminProducts));
+                console.log('✅ Product added:', name);
+                console.log('📤 Starting sync to Supabase...');
+                
+                // Sync to cloud
+                if (window.markDataForCloudSync) {
+                  window.markDataForCloudSync();
+                } else if (window.syncToCloud) {
+                  await window.syncToCloud();
+                }
+                
+                // Clear form
+                document.getElementById('productName').value = '';
+                document.getElementById('productCategory').value = '';
+                document.getElementById('productBrand').value = '';
+                document.getElementById('productPrice').value = '';
+                document.getElementById('productStock').value = '';
+                document.getElementById('productImage').value = '';
+                document.getElementById('productImagePreview').style.display = 'none';
+                
+                // Refresh display
+                if (window.displayProducts) displayProducts();
+                
+                // Show success message
+                const msgDiv = document.createElement('div');
+                msgDiv.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#25d366;color:#000;padding:16px 24px;border-radius:8px;font-weight:bold;z-index:10000;box-shadow:0 4px 12px rgba(37,211,102,0.4);';
+                msgDiv.textContent = '✓ Product added successfully!';
+                document.body.appendChild(msgDiv);
+                setTimeout(() => msgDiv.remove(), 3000);
+              } catch (error) {
+                console.error('❌ Error adding product:', error);
+                alert('❌ Error: ' + error.message);
+              } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+              }
+            };
+            reader.readAsDataURL(file);
+          } else {
+            // Add product without image
+            try {
+              const newProduct = {name, category, brand, price, stock, image: null};
               adminProducts.push(newProduct);
               localStorage.setItem('adminProducts', JSON.stringify(adminProducts));
-              console.log('✅ Product added:', name, '- Syncing to cloud...');
+              console.log('✅ Product added (no image):', name);
+              console.log('📤 Starting sync to Supabase...');
+              
+              // Sync to cloud
               if (window.markDataForCloudSync) {
                 window.markDataForCloudSync();
-              } else {
-                syncToCloud();
+              } else if (window.syncToCloud) {
+                await window.syncToCloud();
               }
+              
+              // Clear form
               document.getElementById('productName').value = '';
               document.getElementById('productCategory').value = '';
               document.getElementById('productBrand').value = '';
@@ -1657,7 +1859,9 @@
               document.getElementById('productStock').value = '';
               document.getElementById('productImage').value = '';
               document.getElementById('productImagePreview').style.display = 'none';
-              displayProducts();
+              
+              // Refresh display
+              if (window.displayProducts) displayProducts();
               
               // Show success message
               const msgDiv = document.createElement('div');
@@ -1665,103 +1869,153 @@
               msgDiv.textContent = '✓ Product added successfully!';
               document.body.appendChild(msgDiv);
               setTimeout(() => msgDiv.remove(), 3000);
-            };
-            reader.readAsDataURL(file);
-          } else {
-            // Add product without image
-            const newProduct = {name, category, brand, price, stock, image: null};
-            adminProducts.push(newProduct);
-            localStorage.setItem('adminProducts', JSON.stringify(adminProducts));
-            console.log('✅ Product added (no image):', name, '- Syncing to cloud...');
-            if (window.markDataForCloudSync) {
-              window.markDataForCloudSync();
-            } else {
-              syncToCloud();
+            } catch (error) {
+              console.error('❌ Error adding product:', error);
+              alert('❌ Error: ' + error.message);
+            } finally {
+              btn.textContent = originalText;
+              btn.disabled = false;
             }
-            document.getElementById('productName').value = '';
-            document.getElementById('productCategory').value = '';
-            document.getElementById('productBrand').value = '';
-            document.getElementById('productPrice').value = '';
-            document.getElementById('productStock').value = '';
-            document.getElementById('productImage').value = '';
-            document.getElementById('productImagePreview').style.display = 'none';
-            displayProducts();
-            
-            // Show success message
-            const msgDiv = document.createElement('div');
-            msgDiv.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#25d366;color:#000;padding:16px 24px;border-radius:8px;font-weight:bold;z-index:10000;box-shadow:0 4px 12px rgba(37,211,102,0.4);';
-            msgDiv.textContent = '✓ Product added successfully!';
-            document.body.appendChild(msgDiv);
-            setTimeout(() => msgDiv.remove(), 3000);
           }
-        } else {
-          alert('Please fill all fields correctly');
+        } catch (error) {
+          console.error('❌ Error in add product handler:', error);
+          alert('❌ Error: ' + error.message);
+          const btn = document.getElementById('addProductBtn');
+          btn.textContent = '❌ Error - Try Again';
+          btn.disabled = false;
         }
       });
 
       // Add brand button
-      document.getElementById('addBrandBtn').addEventListener('click', () => {
-        const brandName = document.getElementById('brandName').value.trim();
-        const brandImageInput = document.getElementById('brandImage');
-        let adminBrands = JSON.parse(localStorage.getItem('adminBrands')) || [];
-        
-        // Check if brand name already exists
-        const brandExists = adminBrands.some(b => {
-          const name = typeof b === 'string' ? b : b.name;
-          return name === brandName;
-        });
-
-        if (!brandName) {
-          alert('Please enter a brand name');
-          return;
-        }
-
-        if (brandExists) {
-          alert('Brand already exists');
-          return;
-        }
-
-        // Handle image if selected
-        if (brandImageInput.files.length > 0) {
-          const file = brandImageInput.files[0];
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            const newBrand = {
-              name: brandName,
-              image: e.target.result
-            };
-            adminBrands.push(newBrand);
-            localStorage.setItem('adminBrands', JSON.stringify(adminBrands));
-            console.log('✅ Brand added:', brandName, '- Syncing to cloud...');
-            if (window.markDataForCloudSync) {
-              window.markDataForCloudSync();
-            } else {
-              syncToCloud();
-            }
-            document.getElementById('brandName').value = '';
-            document.getElementById('brandImage').value = '';
-            document.getElementById('brandImagePreview').style.display = 'none';
-            openAdminPanel();
-          };
-          reader.readAsDataURL(file);
-        } else {
-          // Add brand without image
-          const newBrand = {
-            name: brandName,
-            image: null
-          };
-          adminBrands.push(newBrand);
-          localStorage.setItem('adminBrands', JSON.stringify(adminBrands));
-          console.log('✅ Brand added (no image):', brandName, '- Syncing to cloud...');
-          if (window.markDataForCloudSync) {
-            window.markDataForCloudSync();
-          } else {
-            syncToCloud();
+      document.getElementById('addBrandBtn').addEventListener('click', async () => {
+        try {
+          const brandName = document.getElementById('brandName').value.trim();
+          const brandImageInput = document.getElementById('brandImage');
+          let adminBrands = JSON.parse(localStorage.getItem('adminBrands')) || [];
+          
+          // Validation
+          if (!brandName) {
+            alert('❌ Brand name is required');
+            return;
           }
-          document.getElementById('brandName').value = '';
-          document.getElementById('brandImage').value = '';
-          document.getElementById('brandImagePreview').style.display = 'none';
-          openAdminPanel();
+
+          // Check if brand name already exists
+          const brandExists = adminBrands.some(b => {
+            const name = typeof b === 'string' ? b : b.name;
+            return name === brandName;
+          });
+
+          if (brandExists) {
+            alert('❌ Brand already exists');
+            return;
+          }
+
+          // Show loading state
+          const btn = document.getElementById('addBrandBtn');
+          const originalText = btn.textContent;
+          btn.textContent = '⏳ Adding...';
+          btn.disabled = true;
+
+          // Handle image if selected
+          if (brandImageInput.files.length > 0) {
+            const file = brandImageInput.files[0];
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+              try {
+                const newBrand = {
+                  name: brandName,
+                  image: e.target.result
+                };
+                adminBrands.push(newBrand);
+                localStorage.setItem('adminBrands', JSON.stringify(adminBrands));
+                console.log('✅ Brand added:', brandName);
+                console.log('📤 Starting sync to Supabase...');
+                
+                // Sync to cloud
+                if (window.markDataForCloudSync) {
+                  window.markDataForCloudSync();
+                } else if (window.syncToCloud) {
+                  await window.syncToCloud();
+                }
+                
+                // Clear form
+                document.getElementById('brandName').value = '';
+                document.getElementById('brandImage').value = '';
+                document.getElementById('brandImagePreview').style.display = 'none';
+                
+                // Refresh display
+                if (window.openAdminPanel) {
+                  openAdminPanel();
+                } else {
+                  console.log('✅ Brand added to localStorage');
+                }
+                
+                // Show success message
+                const msgDiv = document.createElement('div');
+                msgDiv.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#25d366;color:#000;padding:16px 24px;border-radius:8px;font-weight:bold;z-index:10000;box-shadow:0 4px 12px rgba(37,211,102,0.4);';
+                msgDiv.textContent = '✓ Brand added successfully!';
+                document.body.appendChild(msgDiv);
+                setTimeout(() => msgDiv.remove(), 3000);
+              } catch (error) {
+                console.error('❌ Error adding brand:', error);
+                alert('❌ Error: ' + error.message);
+              } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+              }
+            };
+            reader.readAsDataURL(file);
+          } else {
+            // Add brand without image
+            try {
+              const newBrand = {
+                name: brandName,
+                image: null
+              };
+              adminBrands.push(newBrand);
+              localStorage.setItem('adminBrands', JSON.stringify(adminBrands));
+              console.log('✅ Brand added (no image):', brandName);
+              console.log('📤 Starting sync to Supabase...');
+              
+              // Sync to cloud
+              if (window.markDataForCloudSync) {
+                window.markDataForCloudSync();
+              } else if (window.syncToCloud) {
+                await window.syncToCloud();
+              }
+              
+              // Clear form
+              document.getElementById('brandName').value = '';
+              document.getElementById('brandImage').value = '';
+              document.getElementById('brandImagePreview').style.display = 'none';
+              
+              // Refresh display
+              if (window.openAdminPanel) {
+                openAdminPanel();
+              } else {
+                console.log('✅ Brand added to localStorage');
+              }
+              
+              // Show success message
+              const msgDiv = document.createElement('div');
+              msgDiv.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#25d366;color:#000;padding:16px 24px;border-radius:8px;font-weight:bold;z-index:10000;box-shadow:0 4px 12px rgba(37,211,102,0.4);';
+              msgDiv.textContent = '✓ Brand added successfully!';
+              document.body.appendChild(msgDiv);
+              setTimeout(() => msgDiv.remove(), 3000);
+            } catch (error) {
+              console.error('❌ Error adding brand:', error);
+              alert('❌ Error: ' + error.message);
+            } finally {
+              btn.textContent = originalText;
+              btn.disabled = false;
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error in add brand handler:', error);
+          alert('❌ Error: ' + error.message);
+          const btn = document.getElementById('addBrandBtn');
+          btn.textContent = '❌ Error - Try Again';
+          btn.disabled = false;
         }
       });
 
@@ -1900,9 +2154,13 @@
         }
       }
     }
+    
+    // Expose loadAdminBrands to global scope for real-time sync
+    window.loadAdminBrands = loadAdminBrands;
 
-    // Persistent click handler for product grid - defined once and reused
+    // Persistent click handler for product grid
     let productGridHandlerAttached = false;
+    let productGridHandlerFunc = null;
     
     function setupProductGridHandler() {
       const productsGrid = document.getElementById('productsGrid');
@@ -1911,78 +2169,59 @@
         return;
       }
       
-      // If already attached, don't attach again
-      if (productGridHandlerAttached) {
-        console.log('✅ Handler already attached, skipping duplicate');
-        return;
+      // Remove old handler if it exists
+      if (productGridHandlerFunc) {
+        productsGrid.removeEventListener('click', productGridHandlerFunc);
+        console.log('🗑️ Old handler removed');
       }
       
-      // Attach click handler that delegates to all buttons
-      productsGrid.addEventListener('click', function handleProductGridClick(e) {
+      // Define new handler
+      productGridHandlerFunc = function handleProductGridClick(e) {
         // Check if click target is or is inside an add-to-order button
         const btn = e.target.closest('.add-to-order-btn');
-        if (!btn) {
-          console.log('Click detected but not on an add button');
-          return;
-        }
+        if (!btn) return;
         
-        console.log('🎯 ============================================');
+        e.preventDefault();
+        e.stopPropagation();
+        
         console.log('🎯 ADD BUTTON CLICKED!');
         
         try {
           const idxAttr = btn.getAttribute('data-idx');
-          console.log('📊 data-idx attribute value:', idxAttr, '(type:', typeof idxAttr + ')');
-          
           const idx = parseInt(idxAttr, 10);
-          console.log('📊 Parsed to number:', idx, isNaN(idx) ? '(NaN!)' : '(valid)');
           
           // Load fresh products from localStorage
-          const jsonStr = localStorage.getItem('adminProducts');
-          console.log('📦 localStorage.adminProducts:', jsonStr ? 'EXISTS (' + jsonStr.length + ' chars)' : 'MISSING');
-          
-          const adminProducts = jsonStr ? JSON.parse(jsonStr) : [];
-          console.log('✅ Parsed', adminProducts.length, 'products');
+          const adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
           
           if (adminProducts.length === 0) {
-            console.error('❌ No products in localStorage!');
             alert('❌ No products in storage. Add products in admin panel first.');
             return;
           }
           
-          if (isNaN(idx)) {
-            console.error('❌ Index is NaN!');
-            alert('❌ Invalid product index');
-            return;
-          }
-          
           if (idx < 0 || idx >= adminProducts.length) {
-            console.error('❌ Index out of bounds:', idx, '(total:', adminProducts.length + ')');
-            alert('❌ Product index out of range');
+            alert('❌ Product not found');
             return;
           }
           
           const product = adminProducts[idx];
-          console.log('✅ Product found:', product.name, '| Price:', product.price, '| Stock:', product.stock);
-          
-          if (!product.name) {
-            console.error('❌ Product has no name property!');
+          if (!product || !product.name) {
             alert('❌ Invalid product data');
             return;
           }
           
-          console.log('✅ Opening quantity form...');
+          console.log('✅ Opening quantity form for:', product.name);
           showProductQuantityFormFromMain(product, adminProducts);
           
         } catch (error) {
-          console.error('❌ Exception raised:', error.message);
-          console.error('Stack:', error.stack);
+          console.error('❌ Error:', error.message);
           alert('Error: ' + error.message);
         }
-        console.log('🎯 ============================================\n');
-      });
+      };
       
+      // Attach new handler
+      productsGrid.addEventListener('click', productGridHandlerFunc);
       productGridHandlerAttached = true;
-      console.log('✅ Click handler successfully attached to productsGrid');
+      console.log('✅ Click handler attached to productsGrid');
     }
 
     // Display products with images on main page
@@ -2052,8 +2291,37 @@
 
       productsGrid.innerHTML = html;
 
-      // Attach persistent handler for add buttons
-      setupProductGridHandler();
+      // Attach click handlers directly to each button
+      document.querySelectorAll('.add-to-order-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          console.log('✅ Add button clicked! data-idx:', btn.getAttribute('data-idx'));
+          
+          try {
+            const idx = parseInt(btn.getAttribute('data-idx'), 10);
+            const adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
+            
+            if (idx < 0 || idx >= adminProducts.length) {
+              alert('❌ Product not found');
+              return;
+            }
+            
+            const product = adminProducts[idx];
+            if (!product || !product.name) {
+              alert('❌ Invalid product');
+              return;
+            }
+            
+            console.log('Opening form for:', product.name);
+            showProductQuantityFormFromMain(product, adminProducts);
+          } catch (error) {
+            console.error('Error:', error);
+            alert('Error: ' + error.message);
+          }
+        });
+      });
 
       // Add card hover effects
       document.querySelectorAll('.product-card').forEach(card => {
@@ -2083,6 +2351,9 @@
         });
       }
     }
+    
+    // Expose displayProducts to global scope for real-time sync
+    window.displayProducts = displayProducts;
 
     // Filter and search products
     function filterAndSearchProducts(adminProducts) {
@@ -2251,15 +2522,25 @@
       const backBtn = document.getElementById('backToProductsBtn');
       const decreaseBtn = document.getElementById('decreaseQty');
       const increaseBtn = document.getElementById('increaseQty');
+      const qtyInput = document.getElementById('quantityInput');
+      const totalElement = document.getElementById('totalPrice');
+
+      console.log('Button check - closeBtn:', !!closeBtn, 'addBtn:', !!addBtn, 'backBtn:', !!backBtn, 'decreaseBtn:', !!decreaseBtn, 'increaseBtn:', !!increaseBtn);
 
       if (!closeBtn || !addBtn || !backBtn || !decreaseBtn || !increaseBtn) {
-        console.error('Missing buttons in form. closeBtn:', !!closeBtn, 'addBtn:', !!addBtn, 'backBtn:', !!backBtn, 'decreaseBtn:', !!decreaseBtn, 'increaseBtn:', !!increaseBtn);
+        console.error('❌ Missing buttons in form!');
+        console.error('  - closeBtn:', !!closeBtn);
+        console.error('  - addBtn:', !!addBtn);
+        console.error('  - backBtn:', !!backBtn);
+        console.error('  - decreaseBtn:', !!decreaseBtn);
+        console.error('  - increaseBtn:', !!increaseBtn);
+        alert('Error: Form elements not found. Check console.');
         return;
       }
 
       // Close button
       closeBtn.addEventListener('click', () => {
-        console.log('Close button clicked');
+        console.log('✅ Close button clicked');
         formOverlay.remove();
       });
 
@@ -2270,6 +2551,7 @@
         if (currentQty < product.stock) {
           input.value = currentQty + 1;
           updateTotalPrice();
+          console.log('Qty increased to:', input.value);
         }
       });
 
@@ -2280,11 +2562,11 @@
         if (currentQty > 1) {
           input.value = currentQty - 1;
           updateTotalPrice();
+          console.log('Qty decreased to:', input.value);
         }
       });
 
       // Update total price on input change
-      const qtyInput = document.getElementById('quantityInput');
       if (qtyInput) {
         qtyInput.addEventListener('input', () => {
           updateTotalPrice();
@@ -2303,35 +2585,42 @@
 
       // Back to products
       backBtn.addEventListener('click', () => {
-        console.log('Back button clicked');
+        console.log('✅ Back button clicked');
         formOverlay.remove();
       });
 
-      // Add to order button
-      addBtn.addEventListener('click', () => {
-        console.log('Add to order button clicked');
-        const qty = parseInt(document.getElementById('quantityInput').value) || 1;
+      // Add to order button - THIS IS THE MAIN ONE
+      addBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('✅✅✅ ADD TO ORDER BUTTON CLICKED! ✅✅✅');
         
-        if (qty > product.stock) {
-          alert(`Only ${product.stock} items available in stock`);
-          return;
-        }
-
-        const orderTextarea = document.querySelector('textarea[name="order"]');
-        if (!orderTextarea) {
-          alert('Order form not found. Please scroll down to the Online Order section.');
-          formOverlay.remove();
-          const orderSection = document.getElementById('order');
-          if (orderSection) {
-            orderSection.scrollIntoView({behavior:'smooth'});
+        try {
+          const qty = parseInt(document.getElementById('quantityInput').value) || 1;
+          console.log('Quantity:', qty, 'Stock:', product.stock);
+          
+          if (qty > product.stock) {
+            alert(`❌ Only ${product.stock} items available in stock`);
+            return;
           }
-          return;
-        }
 
-        const itemText = `${product.name} x ${qty} (Rs. ${product.price})\n`;
-        const currentValue = orderTextarea.value.trim();
-        orderTextarea.value = currentValue ? currentValue + '\n' + itemText : itemText;
-        console.log('Item added to order:', itemText);
+          const orderTextarea = document.querySelector('textarea[name="order"]');
+          if (!orderTextarea) {
+            console.log('Order textarea not found, scrolling to order section...');
+            alert('Order form not found. Please scroll down to the Online Order section.');
+            formOverlay.remove();
+            const orderSection = document.getElementById('order');
+            if (orderSection) {
+              orderSection.scrollIntoView({behavior:'smooth'});
+            }
+            return;
+          }
+
+          const itemText = `${product.name} x ${qty} (Rs. ${product.price})\n`;
+          const currentValue = orderTextarea.value.trim();
+          orderTextarea.value = currentValue ? currentValue + '\n' + itemText : itemText;
+          console.log('✅ Item added to order textarea:', itemText);
+          
         
         // Close overlay and show order
         formOverlay.remove();
