@@ -803,7 +803,6 @@
     // ==================== CLOUD SYNC SYSTEM ====================
     // Uses a free JSON hosting service to sync data across all devices
     
-    let CLOUD_SYNC_URL = localStorage.getItem('cloudSyncUrl') || ''; // Load saved URL
     const DEVICE_ID = 'device_' + Math.random().toString(36).substr(2, 9); // Unique device ID
     
     // Initialize admin password if not already set
@@ -811,20 +810,31 @@
       localStorage.setItem('adminPassword', 'foxer9876@');
     }
 
+    // Function to get the cloud URL dynamically (always read latest)
+    function getCloudUrl() {
+      return localStorage.getItem('cloudSyncUrl') || '';
+    }
+
     // Function to sync data to cloud (primary device only)
     async function syncToCloud() {
+      const CLOUD_SYNC_URL = getCloudUrl();
       if (!CLOUD_SYNC_URL || CLOUD_SYNC_URL.trim() === '') {
         console.log('⚠️  Cloud sync URL not configured. Data is only stored on this device.');
         return;
       }
       
       try {
+        const adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
+        const adminBrands = JSON.parse(localStorage.getItem('adminBrands') || '[]');
+        
+        console.log('📤 Syncing to cloud... Products:', adminProducts.length, 'Brands:', adminBrands.length);
+        
         const cloudData = {
           lastUpdated: new Date().toISOString(),
           updatedByDevice: DEVICE_ID,
           adminPassword: localStorage.getItem('adminPassword'),
-          adminProducts: JSON.parse(localStorage.getItem('adminProducts') || '[]'),
-          adminBrands: JSON.parse(localStorage.getItem('adminBrands') || '[]')
+          adminProducts: adminProducts,
+          adminBrands: adminBrands
         };
         
         const response = await fetch(CLOUD_SYNC_URL, {
@@ -843,12 +853,14 @@
 
     // Function to fetch data from cloud (all devices)
     async function syncFromCloud() {
+      const CLOUD_SYNC_URL = getCloudUrl();
       if (!CLOUD_SYNC_URL || CLOUD_SYNC_URL.trim() === '') {
         console.log('⚠️  Cloud sync URL not configured');
         return;
       }
       
       try {
+        console.log('📥 Fetching data from cloud...');
         const response = await fetch(CLOUD_SYNC_URL);
         if (!response.ok) throw new Error('Failed to fetch cloud data');
         
@@ -867,12 +879,20 @@
 
     // Sync from cloud on page load to get latest data
     window.addEventListener('DOMContentLoaded', async () => {
+      console.log('📱 Page loading, syncing from cloud...');
       await syncFromCloud();
+      // Reload products after syncing (in case they changed)
+      if (window.displayProducts) {
+        displayProducts();
+      }
+      if (window.loadAdminBrands) {
+        loadAdminBrands();
+      }
     });
     
     // Sync to cloud whenever admin data changes (for primary device)
     function markDataForCloudSync() {
-      setTimeout(syncToCloud, 500);
+      setTimeout(syncToCloud, 100);
     }
 
     // ==================== END CLOUD SYNC ====================
@@ -1275,6 +1295,7 @@
       html += '<div style="display:flex;gap:10px;">';
       html += '<button id="testCloudBtn" style="flex:1;padding:10px;background:#667eea;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;">🔗 Test Connection</button>';
       html += '<button id="saveCloudBtn" style="flex:1;padding:10px;background:#25d366;color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;">💾 Save & Sync</button>';
+      html += '<button id="refreshCloudBtn" style="flex:1;padding:10px;background:#ff9800;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;">🔄 Refresh Now</button>';
       html += '</div>';
       html += '<div id="cloudMessage" style="margin-top:10px;padding:10px;border-radius:6px;display:none;text-align:center;font-weight:bold;font-size:12px;"></div>';
       html += '</div>';
@@ -1290,6 +1311,15 @@
       overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
       overlay.innerHTML = html;
       document.body.appendChild(overlay);
+
+      // Pre-populate cloud sync URL if already configured
+      const cloudUrlInput = document.getElementById('cloudSyncUrl');
+      if (cloudUrlInput) {
+        const savedUrl = getCloudUrl();
+        if (savedUrl) {
+          cloudUrlInput.value = savedUrl;
+        }
+      }
 
       // Close button
       document.getElementById('closeAdminPanel').addEventListener('click', () => {
@@ -1447,42 +1477,70 @@
           return;
         }
         
-        // Save the URL to a variable we can use
-        window.CLOUD_SYNC_URL = url;
+        // Save the URL to localStorage (this is what the sync functions will read)
         localStorage.setItem('cloudSyncUrl', url);
         
-        // Now sync to cloud
+        // Now sync to cloud using the standard function
         msgDiv.textContent = '⏳ Syncing data to cloud...';
         msgDiv.style.display = 'block';
         msgDiv.style.background = '#667eea';
+        msgDiv.style.color = '#fff';
         
         try {
-          const cloudData = {
-            lastUpdated: new Date().toISOString(),
-            updatedByDevice: DEVICE_ID,
-            adminPassword: localStorage.getItem('adminPassword'),
-            adminProducts: JSON.parse(localStorage.getItem('adminProducts') || '[]'),
-            adminBrands: JSON.parse(localStorage.getItem('adminBrands') || '[]')
-          };
+          await syncToCloud();
           
-          const response = await fetch(url, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(cloudData)
-          });
-          
+          // Check if it actually synced by trying to read back
+          const response = await fetch(url);
           if (response.ok) {
+            const data = await response.json();
             msgDiv.style.background = '#25d366';
             msgDiv.style.color = '#000';
-            msgDiv.textContent = '✅ Data synced successfully! All devices will now use this cloud data.';
-            console.log('✅ Cloud sync configured and data uploaded');
-          } else {
-            throw new Error('Server error');
+            msgDiv.textContent = '✅ Data synced successfully to cloud! ' + 
+              'Products: ' + data.adminProducts.length + ', ' +
+              'Brands: ' + data.adminBrands.length;
+            console.log('✅ Cloud sync configured and working');
           }
         } catch (error) {
           msgDiv.style.background = '#ff6b6b';
           msgDiv.style.color = '#fff';
           msgDiv.textContent = '❌ Sync failed: ' + error.message;
+        }
+      });
+
+      // Cloud Sync: Refresh from cloud
+      document.getElementById('refreshCloudBtn').addEventListener('click', async () => {
+        const msgDiv = document.getElementById('cloudMessage');
+        const url = getCloudUrl();
+        
+        if (!url) {
+          msgDiv.style.display = 'block';
+          msgDiv.style.background = '#ff6b6b';
+          msgDiv.style.color = '#fff';
+          msgDiv.textContent = 'No cloud URL configured. Set one up first!';
+          return;
+        }
+        
+        msgDiv.textContent = '⏳ Fetching latest data from cloud...';
+        msgDiv.style.display = 'block';
+        msgDiv.style.background = '#667eea';
+        msgDiv.style.color = '#fff';
+        
+        try {
+          await syncFromCloud();
+          
+          // Reload the display
+          loadAdminProducts();
+          loadAdminBrands();
+          displayProducts();
+          
+          msgDiv.style.background = '#25d366';
+          msgDiv.style.color = '#000';
+          msgDiv.textContent = '✅ Data refreshed from cloud! Products updated.';
+          console.log('✅ Data refreshed from cloud');
+        } catch (error) {
+          msgDiv.style.background = '#ff6b6b';
+          msgDiv.style.color = '#fff';
+          msgDiv.textContent = '❌ Refresh failed: ' + error.message;
         }
       });
 
@@ -1504,6 +1562,7 @@
               const newProduct = {name, category, brand, price, stock, image: e.target.result};
               adminProducts.push(newProduct);
               localStorage.setItem('adminProducts', JSON.stringify(adminProducts));
+              console.log('✅ Product added:', name, '- Syncing to cloud...');
               markDataForCloudSync(); // Sync new product to cloud
               document.getElementById('productName').value = '';
               document.getElementById('productCategory').value = '';
@@ -1527,6 +1586,7 @@
             const newProduct = {name, category, brand, price, stock, image: null};
             adminProducts.push(newProduct);
             localStorage.setItem('adminProducts', JSON.stringify(adminProducts));
+            console.log('✅ Product added (no image):', name, '- Syncing to cloud...');
             markDataForCloudSync(); // Sync product to cloud
             document.getElementById('productName').value = '';
             document.getElementById('productCategory').value = '';
@@ -1582,6 +1642,7 @@
             };
             adminBrands.push(newBrand);
             localStorage.setItem('adminBrands', JSON.stringify(adminBrands));
+            console.log('✅ Brand added:', brandName, '- Syncing to cloud...');
             markDataForCloudSync(); // Sync brand to cloud
             document.getElementById('brandName').value = '';
             document.getElementById('brandImage').value = '';
@@ -1597,6 +1658,7 @@
           };
           adminBrands.push(newBrand);
           localStorage.setItem('adminBrands', JSON.stringify(adminBrands));
+          console.log('✅ Brand added (no image):', brandName, '- Syncing to cloud...');
           markDataForCloudSync(); // Sync brand to cloud
           document.getElementById('brandName').value = '';
           document.getElementById('brandImage').value = '';
