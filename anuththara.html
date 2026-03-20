@@ -800,10 +800,82 @@
     </div>
   </div>
   <script type="text/javascript">
+    // ==================== CLOUD SYNC SYSTEM ====================
+    // Uses a free JSON hosting service to sync data across all devices
+    
+    let CLOUD_SYNC_URL = localStorage.getItem('cloudSyncUrl') || ''; // Load saved URL
+    const DEVICE_ID = 'device_' + Math.random().toString(36).substr(2, 9); // Unique device ID
+    
     // Initialize admin password if not already set
     if (!localStorage.getItem('adminPassword')) {
       localStorage.setItem('adminPassword', 'foxer9876@');
     }
+
+    // Function to sync data to cloud (primary device only)
+    async function syncToCloud() {
+      if (!CLOUD_SYNC_URL || CLOUD_SYNC_URL.trim() === '') {
+        console.log('⚠️  Cloud sync URL not configured. Data is only stored on this device.');
+        return;
+      }
+      
+      try {
+        const cloudData = {
+          lastUpdated: new Date().toISOString(),
+          updatedByDevice: DEVICE_ID,
+          adminPassword: localStorage.getItem('adminPassword'),
+          adminProducts: JSON.parse(localStorage.getItem('adminProducts') || '[]'),
+          adminBrands: JSON.parse(localStorage.getItem('adminBrands') || '[]')
+        };
+        
+        const response = await fetch(CLOUD_SYNC_URL, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(cloudData)
+        });
+        
+        if (response.ok) {
+          console.log('✅ Data synced to cloud');
+        }
+      } catch (error) {
+        console.error('⚠️  Cloud sync failed:', error.message);
+      }
+    }
+
+    // Function to fetch data from cloud (all devices)
+    async function syncFromCloud() {
+      if (!CLOUD_SYNC_URL || CLOUD_SYNC_URL.trim() === '') {
+        console.log('⚠️  Cloud sync URL not configured');
+        return;
+      }
+      
+      try {
+        const response = await fetch(CLOUD_SYNC_URL);
+        if (!response.ok) throw new Error('Failed to fetch cloud data');
+        
+        const cloudData = await response.json();
+        
+        // Update local storage with cloud data
+        localStorage.setItem('adminPassword', cloudData.adminPassword || 'foxer9876@');
+        localStorage.setItem('adminProducts', JSON.stringify(cloudData.adminProducts || []));
+        localStorage.setItem('adminBrands', JSON.stringify(cloudData.adminBrands || []));
+        
+        console.log('✅ Data synced from cloud');
+      } catch (error) {
+        console.error('⚠️  Cloud fetch failed:', error.message);
+      }
+    }
+
+    // Sync from cloud on page load to get latest data
+    window.addEventListener('DOMContentLoaded', async () => {
+      await syncFromCloud();
+    });
+    
+    // Sync to cloud whenever admin data changes (for primary device)
+    function markDataForCloudSync() {
+      setTimeout(syncToCloud, 500);
+    }
+
+    // ==================== END CLOUD SYNC ====================
 
     function googleTranslateElementInit() {
       new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'en,si,ta', layout: google.translate.TranslateElement.InlineLayout.SIMPLE}, 'google_translate_element');
@@ -1175,15 +1247,38 @@
 
       // SETTINGS TAB
       html += '<div id="settingsTabContent" style="display:none;">';
-      html += '<div style="background:#222;padding:20px;border-radius:8px;border:1px solid #444;max-width:500px;">';
-      html += '<h3 style="margin-top:0;color:#f6eec2;">Change Admin Password</h3>';
-      html += '<div style="display:flex;flex-direction:column;gap:12px;">';
+      html += '<div style="background:#222;padding:20px;border-radius:8px;border:1px solid #444;max-width:600px;">';
+      
+      // Change Password Section
+      html += '<h3 style="margin-top:0;color:#f6eec2;border-bottom:2px solid #25d366;padding-bottom:10px;">🔐 Change Admin Password</h3>';
+      html += '<div style="margin-bottom:30px;display:flex;flex-direction:column;gap:12px;">';
       html += '<input type="password" id="currentPassword" placeholder="Current Password" style="padding:10px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
       html += '<input type="password" id="newPassword" placeholder="New Password" style="padding:10px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
       html += '<input type="password" id="confirmPassword" placeholder="Confirm New Password" style="padding:10px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
       html += '<button id="changePasswordBtn" style="padding:10px;background:#25d366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">Change Password</button>';
       html += '</div>';
-      html += '<div id="passwordMessage" style="margin-top:12px;padding:10px;border-radius:6px;display:none;text-align:center;font-weight:bold;"></div>';
+      html += '<div id="passwordMessage" style="margin-bottom:20px;padding:10px;border-radius:6px;display:none;text-align:center;font-weight:bold;"></div>';
+      
+      // Cloud Sync Section
+      html += '<h3 style="color:#f6eec2;border-bottom:2px solid #667eea;padding-bottom:10px;">☁️ Cloud Sync (Multi-Device Support)</h3>';
+      html += '<div style="background:rgba(102,126,234,0.1);padding:15px;border-radius:6px;border-left:4px solid #667eea;margin-bottom:15px;">';
+      html += '<p style="color:#f0e6b8;margin:0 0 10px 0;font-size:13px;"><strong>Setup Instructions:</strong></p>';
+      html += '<ol style="color:#d0c6a0;margin:0;padding-left:20px;font-size:12px;line-height:1.6;">';
+      html += '<li>Visit <a href="https://jsonblob.com" target="_blank" style="color:#25d366;">jsonblob.com</a></li>';
+      html += '<li>Click "Create a new JSON Blob"</li>';
+      html += '<li>Paste this template and click "Create Blob":</li>';
+      html += '</ol>';
+      html += '<textarea id="blobTemplate" readonly style="width:100%;height:120px;padding:10px;background:#111;border:1px solid #444;border-radius:6px;color:#25d366;font-size:11px;font-family:monospace;margin:10px 0;box-sizing:border-box;">{"lastUpdated":"","updatedByDevice":"","adminPassword":"foxer9876@","adminProducts":[],"adminBrands":[]}</textarea>';
+      html += '<p style="color:#f0e6b8;margin:10px 0;font-size:12px;">4. Copy the URL from your browser (e.g., https://jsonblob.com/api/jsonBlob/YOUR_ID)</p>';
+      html += '<p style="color:#f0e6b8;margin:0 0 10px 0;font-size:12px;">5. Paste it below and click "Test Connection":</p>';
+      html += '<input type="text" id="cloudSyncUrl" placeholder="Paste Cloud Blob URL here (https://jsonblob.com/api/jsonBlob/xxxxx)" style="width:100%;padding:10px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;font-size:12px;box-sizing:border-box;margin-bottom:10px;">';
+      html += '<div style="display:flex;gap:10px;">';
+      html += '<button id="testCloudBtn" style="flex:1;padding:10px;background:#667eea;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;">🔗 Test Connection</button>';
+      html += '<button id="saveCloudBtn" style="flex:1;padding:10px;background:#25d366;color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;">💾 Save & Sync</button>';
+      html += '</div>';
+      html += '<div id="cloudMessage" style="margin-top:10px;padding:10px;border-radius:6px;display:none;text-align:center;font-weight:bold;font-size:12px;"></div>';
+      html += '</div>';
+      
       html += '</div>';
       html += '</div>';
 
@@ -1289,6 +1384,7 @@
         
         // Store new password in localStorage
         localStorage.setItem('adminPassword', newPass);
+        markDataForCloudSync(); // Sync new password to cloud
         
         // Update the password check in the showAdminPanel function
         window.adminPassword = newPass;
@@ -1301,6 +1397,93 @@
         document.getElementById('currentPassword').value = '';
         document.getElementById('newPassword').value = '';
         document.getElementById('confirmPassword').value = '';
+      });
+
+      // Cloud Sync: Test Connection
+      document.getElementById('testCloudBtn').addEventListener('click', async () => {
+        const url = document.getElementById('cloudSyncUrl').value.trim();
+        const msgDiv = document.getElementById('cloudMessage');
+        
+        if (!url) {
+          msgDiv.style.display = 'block';
+          msgDiv.style.background = '#ff6b6b';
+          msgDiv.style.color = '#fff';
+          msgDiv.textContent = 'Please paste a Cloud Blob URL';
+          return;
+        }
+        
+        try {
+          msgDiv.textContent = '⏳ Testing connection...';
+          msgDiv.style.display = 'block';
+          msgDiv.style.background = '#667eea';
+          
+          const response = await fetch(url);
+          if (response.ok) {
+            msgDiv.style.background = '#25d366';
+            msgDiv.style.color = '#000';
+            msgDiv.textContent = '✅ Connection successful! Click "Save & Sync" to start syncing.';
+          } else {
+            msgDiv.style.background = '#ff6b6b';
+            msgDiv.style.color = '#fff';
+            msgDiv.textContent = '❌ Failed to connect. Check your URL and try again.';
+          }
+        } catch (error) {
+          msgDiv.style.background = '#ff6b6b';
+          msgDiv.style.color = '#fff';
+          msgDiv.textContent = '❌ Connection error: ' + error.message;
+        }
+      });
+
+      // Cloud Sync: Save URL and Sync
+      document.getElementById('saveCloudBtn').addEventListener('click', async () => {
+        const url = document.getElementById('cloudSyncUrl').value.trim();
+        const msgDiv = document.getElementById('cloudMessage');
+        
+        if (!url) {
+          msgDiv.style.display = 'block';
+          msgDiv.style.background = '#ff6b6b';
+          msgDiv.style.color = '#fff';
+          msgDiv.textContent = 'Please paste a Cloud Blob URL first';
+          return;
+        }
+        
+        // Save the URL to a variable we can use
+        window.CLOUD_SYNC_URL = url;
+        localStorage.setItem('cloudSyncUrl', url);
+        
+        // Now sync to cloud
+        msgDiv.textContent = '⏳ Syncing data to cloud...';
+        msgDiv.style.display = 'block';
+        msgDiv.style.background = '#667eea';
+        
+        try {
+          const cloudData = {
+            lastUpdated: new Date().toISOString(),
+            updatedByDevice: DEVICE_ID,
+            adminPassword: localStorage.getItem('adminPassword'),
+            adminProducts: JSON.parse(localStorage.getItem('adminProducts') || '[]'),
+            adminBrands: JSON.parse(localStorage.getItem('adminBrands') || '[]')
+          };
+          
+          const response = await fetch(url, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(cloudData)
+          });
+          
+          if (response.ok) {
+            msgDiv.style.background = '#25d366';
+            msgDiv.style.color = '#000';
+            msgDiv.textContent = '✅ Data synced successfully! All devices will now use this cloud data.';
+            console.log('✅ Cloud sync configured and data uploaded');
+          } else {
+            throw new Error('Server error');
+          }
+        } catch (error) {
+          msgDiv.style.background = '#ff6b6b';
+          msgDiv.style.color = '#fff';
+          msgDiv.textContent = '❌ Sync failed: ' + error.message;
+        }
       });
 
       // Add product button
@@ -1321,6 +1504,7 @@
               const newProduct = {name, category, brand, price, stock, image: e.target.result};
               adminProducts.push(newProduct);
               localStorage.setItem('adminProducts', JSON.stringify(adminProducts));
+              markDataForCloudSync(); // Sync new product to cloud
               document.getElementById('productName').value = '';
               document.getElementById('productCategory').value = '';
               document.getElementById('productBrand').value = '';
@@ -1343,6 +1527,7 @@
             const newProduct = {name, category, brand, price, stock, image: null};
             adminProducts.push(newProduct);
             localStorage.setItem('adminProducts', JSON.stringify(adminProducts));
+            markDataForCloudSync(); // Sync product to cloud
             document.getElementById('productName').value = '';
             document.getElementById('productCategory').value = '';
             document.getElementById('productBrand').value = '';
@@ -1397,6 +1582,7 @@
             };
             adminBrands.push(newBrand);
             localStorage.setItem('adminBrands', JSON.stringify(adminBrands));
+            markDataForCloudSync(); // Sync brand to cloud
             document.getElementById('brandName').value = '';
             document.getElementById('brandImage').value = '';
             document.getElementById('brandImagePreview').style.display = 'none';
@@ -1411,6 +1597,7 @@
           };
           adminBrands.push(newBrand);
           localStorage.setItem('adminBrands', JSON.stringify(adminBrands));
+          markDataForCloudSync(); // Sync brand to cloud
           document.getElementById('brandName').value = '';
           document.getElementById('brandImage').value = '';
           document.getElementById('brandImagePreview').style.display = 'none';
@@ -1554,6 +1741,90 @@
       }
     }
 
+    // Persistent click handler for product grid - defined once and reused
+    let productGridHandlerAttached = false;
+    
+    function setupProductGridHandler() {
+      const productsGrid = document.getElementById('productsGrid');
+      if (!productsGrid) {
+        console.log('⚠️  productsGrid element not found in DOM');
+        return;
+      }
+      
+      // If already attached, don't attach again
+      if (productGridHandlerAttached) {
+        console.log('✅ Handler already attached, skipping duplicate');
+        return;
+      }
+      
+      // Attach click handler that delegates to all buttons
+      productsGrid.addEventListener('click', function handleProductGridClick(e) {
+        // Check if click target is or is inside an add-to-order button
+        const btn = e.target.closest('.add-to-order-btn');
+        if (!btn) {
+          console.log('Click detected but not on an add button');
+          return;
+        }
+        
+        console.log('🎯 ============================================');
+        console.log('🎯 ADD BUTTON CLICKED!');
+        
+        try {
+          const idxAttr = btn.getAttribute('data-idx');
+          console.log('📊 data-idx attribute value:', idxAttr, '(type:', typeof idxAttr + ')');
+          
+          const idx = parseInt(idxAttr, 10);
+          console.log('📊 Parsed to number:', idx, isNaN(idx) ? '(NaN!)' : '(valid)');
+          
+          // Load fresh products from localStorage
+          const jsonStr = localStorage.getItem('adminProducts');
+          console.log('📦 localStorage.adminProducts:', jsonStr ? 'EXISTS (' + jsonStr.length + ' chars)' : 'MISSING');
+          
+          const adminProducts = jsonStr ? JSON.parse(jsonStr) : [];
+          console.log('✅ Parsed', adminProducts.length, 'products');
+          
+          if (adminProducts.length === 0) {
+            console.error('❌ No products in localStorage!');
+            alert('❌ No products in storage. Add products in admin panel first.');
+            return;
+          }
+          
+          if (isNaN(idx)) {
+            console.error('❌ Index is NaN!');
+            alert('❌ Invalid product index');
+            return;
+          }
+          
+          if (idx < 0 || idx >= adminProducts.length) {
+            console.error('❌ Index out of bounds:', idx, '(total:', adminProducts.length + ')');
+            alert('❌ Product index out of range');
+            return;
+          }
+          
+          const product = adminProducts[idx];
+          console.log('✅ Product found:', product.name, '| Price:', product.price, '| Stock:', product.stock);
+          
+          if (!product.name) {
+            console.error('❌ Product has no name property!');
+            alert('❌ Invalid product data');
+            return;
+          }
+          
+          console.log('✅ Opening quantity form...');
+          showProductQuantityFormFromMain(product, adminProducts);
+          
+        } catch (error) {
+          console.error('❌ Exception raised:', error.message);
+          console.error('Stack:', error.stack);
+          alert('Error: ' + error.message);
+        }
+        console.log('🎯 ============================================\n');
+      });
+      
+      productGridHandlerAttached = true;
+      console.log('✅ Click handler successfully attached to productsGrid');
+    }
+
     // Display products with images on main page
     function displayProducts() {
       const productsGrid = document.getElementById('productsGrid');
@@ -1621,17 +1892,8 @@
 
       productsGrid.innerHTML = html;
 
-      // Add click handlers for add to order buttons
-      document.querySelectorAll('.add-to-order-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const idx = parseInt(btn.getAttribute('data-idx'));
-          const product = adminProducts[idx];
-          
-          // Show quantity form
-          showProductQuantityFormFromMain(product, adminProducts);
-        });
-      });
+      // Attach persistent handler for add buttons
+      setupProductGridHandler();
 
       // Add card hover effects
       document.querySelectorAll('.product-card').forEach(card => {
@@ -1689,7 +1951,7 @@
 
       let html = '';
       filteredProducts.forEach((product, idx) => {
-        const originalIdx = adminProducts.indexOf(product);
+        const originalIdx = adminProducts.findIndex(p => p.name === product.name && p.brand === product.brand && p.price === product.price);
         const catEmoji = {
           'produce': '🥬',
           'dairy': '🥛',
@@ -1749,15 +2011,8 @@
 
       productsGrid.innerHTML = html;
 
-      // Re-attach click handlers for filtered products
-      document.querySelectorAll('.add-to-order-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const idx = parseInt(btn.getAttribute('data-idx'));
-          const product = adminProducts[idx];
-          showProductQuantityFormFromMain(product, adminProducts);
-        });
-      });
+      // Handler is already attached globally, no need to reattach
+      // Just update the innerHTML and it will work with the existing listener
 
       // Re-attach hover effects
       document.querySelectorAll('.product-card').forEach(card => {
@@ -1815,37 +2070,41 @@
       html += `<button id="backToProductsBtn" style="width:100%;padding:14px;background:#444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:14px;transition:all 0.2s;">← Back to Products</button>`;
       html += '</div>';
 
+      // Remove any existing form overlay
+      const existingOverlay = document.getElementById('quantityFormOverlay');
+      if (existingOverlay) {
+        existingOverlay.remove();
+        console.log('Removed existing overlay');
+      }
+
       // Create form overlay
       const formOverlay = document.createElement('div');
       formOverlay.id = 'quantityFormOverlay';
-      formOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1001;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
+      formOverlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:1001;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
       formOverlay.innerHTML = html;
       document.body.appendChild(formOverlay);
+      console.log('Form overlay created for product:', product.name);
 
-      // Add button hover effects
+      // Now attach event listeners
+      const closeBtn = document.getElementById('closeQuantityForm');
       const addBtn = document.getElementById('addToOrderBtn');
       const backBtn = document.getElementById('backToProductsBtn');
       const decreaseBtn = document.getElementById('decreaseQty');
       const increaseBtn = document.getElementById('increaseQty');
 
-      [addBtn, backBtn, decreaseBtn, increaseBtn].forEach(btn => {
-        btn.addEventListener('mouseenter', () => {
-          btn.style.transform = 'translateY(-2px)';
-          btn.style.boxShadow = '0 8px 16px rgba(0,0,0,0.3)';
-        });
-        btn.addEventListener('mouseleave', () => {
-          btn.style.transform = 'translateY(0)';
-          btn.style.boxShadow = 'none';
-        });
-      });
+      if (!closeBtn || !addBtn || !backBtn || !decreaseBtn || !increaseBtn) {
+        console.error('Missing buttons in form. closeBtn:', !!closeBtn, 'addBtn:', !!addBtn, 'backBtn:', !!backBtn, 'decreaseBtn:', !!decreaseBtn, 'increaseBtn:', !!increaseBtn);
+        return;
+      }
 
-      // Close quantity form
-      document.getElementById('closeQuantityForm').addEventListener('click', () => {
+      // Close button
+      closeBtn.addEventListener('click', () => {
+        console.log('Close button clicked');
         formOverlay.remove();
       });
 
       // Increment quantity
-      document.getElementById('increaseQty').addEventListener('click', () => {
+      increaseBtn.addEventListener('click', () => {
         const input = document.getElementById('quantityInput');
         const currentQty = parseInt(input.value) || 1;
         if (currentQty < product.stock) {
@@ -1855,7 +2114,7 @@
       });
 
       // Decrement quantity
-      document.getElementById('decreaseQty').addEventListener('click', () => {
+      decreaseBtn.addEventListener('click', () => {
         const input = document.getElementById('quantityInput');
         const currentQty = parseInt(input.value) || 1;
         if (currentQty > 1) {
@@ -1865,24 +2124,32 @@
       });
 
       // Update total price on input change
-      document.getElementById('quantityInput').addEventListener('input', () => {
-        updateTotalPrice();
-      });
+      const qtyInput = document.getElementById('quantityInput');
+      if (qtyInput) {
+        qtyInput.addEventListener('input', () => {
+          updateTotalPrice();
+        });
+      }
 
       // Function to update total price
       function updateTotalPrice() {
         const qty = parseInt(document.getElementById('quantityInput').value) || 1;
         const total = product.price * qty;
-        document.getElementById('totalPrice').textContent = `💰 Total: Rs.${total}`;
+        const totalElement = document.getElementById('totalPrice');
+        if (totalElement) {
+          totalElement.textContent = `💰 Total: Rs.${total}`;
+        }
       }
 
       // Back to products
-      document.getElementById('backToProductsBtn').addEventListener('click', () => {
+      backBtn.addEventListener('click', () => {
+        console.log('Back button clicked');
         formOverlay.remove();
       });
 
-      // Add to order
-      document.getElementById('addToOrderBtn').addEventListener('click', () => {
+      // Add to order button
+      addBtn.addEventListener('click', () => {
+        console.log('Add to order button clicked');
         const qty = parseInt(document.getElementById('quantityInput').value) || 1;
         
         if (qty > product.stock) {
@@ -1894,21 +2161,29 @@
         if (!orderTextarea) {
           alert('Order form not found. Please scroll down to the Online Order section.');
           formOverlay.remove();
-          document.getElementById('order').scrollIntoView({behavior:'smooth'});
+          const orderSection = document.getElementById('order');
+          if (orderSection) {
+            orderSection.scrollIntoView({behavior:'smooth'});
+          }
           return;
         }
 
         const itemText = `${product.name} x ${qty} (Rs. ${product.price})\n`;
-        orderTextarea.value = (orderTextarea.value.trim() ? orderTextarea.value + '\n' : '') + itemText;
+        const currentValue = orderTextarea.value.trim();
+        orderTextarea.value = currentValue ? currentValue + '\n' + itemText : itemText;
+        console.log('Item added to order:', itemText);
         
         // Close overlay and show order
         formOverlay.remove();
         orderTextarea.scrollIntoView({behavior:'smooth'});
       });
 
-      // Close on overlay click
+      // Close on overlay click (outside the modal)
       formOverlay.addEventListener('click', (e) => {
-        if (e.target === formOverlay) formOverlay.remove();
+        if (e.target === formOverlay) {
+          console.log('Overlay background clicked');
+          formOverlay.remove();
+        }
       });
     }
 
