@@ -790,6 +790,8 @@
     }
   </style>
   <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <!-- Supabase SDK for Real-Time Sync -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <body>
   <div class="nav-overlay" id="navOverlay"></div>
   <div class="site-header">
@@ -800,88 +802,122 @@
     </div>
   </div>
   <script type="text/javascript">
-    // ==================== CLOUD SYNC SYSTEM ====================
-    // Uses a free JSON hosting service to sync data across all devices
+    // ==================== SUPABASE REAL-TIME SYNC ====================
     
     const DEVICE_ID = 'device_' + Math.random().toString(36).substr(2, 9); // Unique device ID
+    
+    // Supabase Configuration
+    const SUPABASE_URL = 'https://eajouhfxruywpzlecuyw.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVham91aGZ4cnV5d3B6bGVjdXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMDMxMzIsImV4cCI6MjA4OTU3OTEzMn0.qxhE_oiFgVFGdwcaeNh2zTBa5xHTeBULwHCx_e_ZGnE';
+    
+    // Initialize Supabase client
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
     // Initialize admin password if not already set
     if (!localStorage.getItem('adminPassword')) {
       localStorage.setItem('adminPassword', 'foxer');
     }
 
-    // Function to get the cloud URL dynamically (always read latest)
-    function getCloudUrl() {
-      return localStorage.getItem('cloudSyncUrl') || '';
-    }
-
-    // Function to sync data to cloud (primary device only)
+    // Sync data to Supabase
     async function syncToCloud() {
-      const CLOUD_SYNC_URL = getCloudUrl();
-      if (!CLOUD_SYNC_URL || CLOUD_SYNC_URL.trim() === '') {
-        console.log('⚠️  Cloud sync URL not configured. Data is only stored on this device.');
-        return;
-      }
-      
       try {
         const adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
         const adminBrands = JSON.parse(localStorage.getItem('adminBrands') || '[]');
+        const bnplHistory = JSON.parse(localStorage.getItem('bnplHistory') || '[]');
         
-        console.log('📤 Syncing to cloud... Products:', adminProducts.length, 'Brands:', adminBrands.length);
+        console.log('📤 Syncing to Supabase... Products:', adminProducts.length, 'Brands:', adminBrands.length);
         
-        const cloudData = {
-          lastUpdated: new Date().toISOString(),
-          updatedByDevice: DEVICE_ID,
-          adminPassword: localStorage.getItem('adminPassword'),
-          adminProducts: adminProducts,
-          adminBrands: adminBrands
-        };
+        const { data, error } = await supabase
+          .from('app_data')
+          .update({
+            admin_password: localStorage.getItem('adminPassword'),
+            admin_products: adminProducts,
+            admin_brands: adminBrands,
+            bnpl_history: bnplHistory,
+            updated_at: new Date().toISOString(),
+            updated_by_device: DEVICE_ID
+          })
+          .eq('id', 1);
         
-        const response = await fetch(CLOUD_SYNC_URL, {
-          method: 'PUT',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(cloudData)
-        });
-        
-        if (response.ok) {
-          console.log('✅ Data synced to cloud');
+        if (error) {
+          console.error('❌ Sync to Supabase failed:', error.message);
+          return false;
         }
+        
+        console.log('✅ Data synced to Supabase');
+        return true;
       } catch (error) {
-        console.error('⚠️  Cloud sync failed:', error.message);
+        console.error('❌ Sync failed:', error.message);
+        return false;
       }
     }
 
-    // Function to fetch data from cloud (all devices)
+    // Fetch data from Supabase
     async function syncFromCloud() {
-      const CLOUD_SYNC_URL = getCloudUrl();
-      if (!CLOUD_SYNC_URL || CLOUD_SYNC_URL.trim() === '') {
-        console.log('⚠️  Cloud sync URL not configured');
-        return;
-      }
-      
       try {
-        console.log('📥 Fetching data from cloud...');
-        const response = await fetch(CLOUD_SYNC_URL);
-        if (!response.ok) throw new Error('Failed to fetch cloud data');
+        console.log('📥 Fetching data from Supabase...');
         
-        const cloudData = await response.json();
+        const { data, error } = await supabase
+          .from('app_data')
+          .select('*')
+          .eq('id', 1)
+          .single();
+        
+        if (error) {
+          console.error('❌ Fetch from Supabase failed:', error.message);
+          return false;
+        }
         
         // Update local storage with cloud data
-        localStorage.setItem('adminPassword', cloudData.adminPassword || 'foxer');
-        localStorage.setItem('adminProducts', JSON.stringify(cloudData.adminProducts || []));
-        localStorage.setItem('adminBrands', JSON.stringify(cloudData.adminBrands || []));
+        localStorage.setItem('adminPassword', data.admin_password || 'foxer');
+        localStorage.setItem('adminProducts', JSON.stringify(data.admin_products || []));
+        localStorage.setItem('adminBrands', JSON.stringify(data.admin_brands || []));
+        localStorage.setItem('bnplHistory', JSON.stringify(data.bnpl_history || []));
         
-        console.log('✅ Data synced from cloud');
+        console.log('✅ Data synced from Supabase');
+        return true;
       } catch (error) {
-        console.error('⚠️  Cloud fetch failed:', error.message);
+        console.error('❌ Fetch failed:', error.message);
+        return false;
       }
     }
 
-    // Sync from cloud on page load to get latest data
+    // Set up real-time listener for changes from other devices
+    function setupRealtimeSync() {
+      console.log('🔄 Setting up real-time sync...');
+      
+      supabase
+        .channel('app_data_changes')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'app_data' },
+          async (payload) => {
+            // Only update if change came from different device
+            if (payload.new.updated_by_device !== DEVICE_ID) {
+              console.log('🔄 Received update from another device, refreshing...');
+              
+              // Update local storage
+              localStorage.setItem('adminPassword', payload.new.admin_password || 'foxer');
+              localStorage.setItem('adminProducts', JSON.stringify(payload.new.admin_products || []));
+              localStorage.setItem('adminBrands', JSON.stringify(payload.new.admin_brands || []));
+              localStorage.setItem('bnplHistory', JSON.stringify(payload.new.bnpl_history || []));
+              
+              // Refresh UI
+              if (window.displayProducts) displayProducts();
+              if (window.loadAdminBrands) loadAdminBrands();
+              
+              console.log('✅ UI updated with latest data');
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    // Sync from cloud on page load
     window.addEventListener('DOMContentLoaded', async () => {
-      console.log('📱 Page loading, syncing from cloud...');
+      console.log('📱 Page loading, syncing from Supabase...');
       await syncFromCloud();
-      // Reload products after syncing (in case they changed)
+      setupRealtimeSync(); // Start listening for real-time updates
+      // Reload products after syncing
       if (window.displayProducts) {
         displayProducts();
       }
@@ -890,7 +926,7 @@
       }
     });
     
-    // Sync to cloud whenever admin data changes (for primary device)
+    // Auto-sync whenever admin data changes
     function markDataForCloudSync() {
       setTimeout(syncToCloud, 100);
     }
@@ -1280,25 +1316,29 @@
       html += '</div>';
       html += '<div id="passwordMessage" style="margin-bottom:20px;padding:10px;border-radius:6px;display:none;text-align:center;font-weight:bold;"></div>';
       
-      // Cloud Sync Section
-      html += '<h3 style="color:#f6eec2;border-bottom:2px solid #667eea;padding-bottom:10px;">☁️ Cloud Sync (Multi-Device Support)</h3>';
+      // Cloud Sync Section - Supabase
+      html += '<h3 style="color:#f6eec2;border-bottom:2px solid #667eea;padding-bottom:10px;">☁️ Real-Time Cloud Sync (Supabase)</h3>';
       html += '<div style="background:rgba(102,126,234,0.1);padding:15px;border-radius:6px;border-left:4px solid #667eea;margin-bottom:15px;">';
-      html += '<p style="color:#f0e6b8;margin:0 0 10px 0;font-size:13px;"><strong>Setup Instructions:</strong></p>';
-      html += '<ol style="color:#d0c6a0;margin:0;padding-left:20px;font-size:12px;line-height:1.6;">';
-      html += '<li>Visit <a href="https://jsonblob.com" target="_blank" style="color:#25d366;">jsonblob.com</a></li>';
-      html += '<li>Click "Create a new JSON Blob"</li>';
-      html += '<li>Paste this template and click "Create Blob":</li>';
-      html += '</ol>';
-      html += '<textarea id="blobTemplate" readonly style="width:100%;height:120px;padding:10px;background:#111;border:1px solid #444;border-radius:6px;color:#25d366;font-size:11px;font-family:monospace;margin:10px 0;box-sizing:border-box;">{"lastUpdated":"","updatedByDevice":"","adminPassword":"foxer","adminProducts":[],"adminBrands":[]}</textarea>';
-      html += '<p style="color:#f0e6b8;margin:10px 0;font-size:12px;">4. Copy the URL from your browser (e.g., https://jsonblob.com/api/jsonBlob/YOUR_ID)</p>';
-      html += '<p style="color:#f0e6b8;margin:0 0 10px 0;font-size:12px;">5. Paste it below and click "Test Connection":</p>';
-      html += '<input type="text" id="cloudSyncUrl" placeholder="Paste Cloud Blob URL here (https://jsonblob.com/api/jsonBlob/xxxxx)" style="width:100%;padding:10px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;font-size:12px;box-sizing:border-box;margin-bottom:10px;">';
+      html += '<p style="color:#f0e6b8;margin:0 0 15px 0;font-size:12px;"><strong>✅ Cloud sync is active!</strong> Your data syncs automatically across all devices in real-time.</p>';
       html += '<div style="display:flex;gap:10px;">';
-      html += '<button id="testCloudBtn" style="flex:1;padding:10px;background:#667eea;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;">🔗 Test Connection</button>';
-      html += '<button id="saveCloudBtn" style="flex:1;padding:10px;background:#25d366;color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;">💾 Save & Sync</button>';
-      html += '<button id="refreshCloudBtn" style="flex:1;padding:10px;background:#ff9800;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;">🔄 Refresh Now</button>';
+      html += '<button id="syncNowBtn" style="flex:1;padding:12px;background:#25d366;color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;">⬆️ Sync Now</button>';
+      html += '<button id="refreshNowBtn" style="flex:1;padding:12px;background:#667eea;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;">⬇️ Pull Latest</button>';
       html += '</div>';
-      html += '<div id="cloudMessage" style="margin-top:10px;padding:10px;border-radius:6px;display:none;text-align:center;font-weight:bold;font-size:12px;"></div>';
+      html += '<div id="syncStatusMessage" style="margin-top:10px;padding:10px;border-radius:6px;display:none;text-align:center;font-weight:bold;font-size:12px;"></div>';
+      html += '<p style="color:#999;margin:15px 0 0 0;font-size:11px;">💡 Data syncs automatically when you add/edit products or brands. Manual sync buttons available above.</p>';
+      html += '</div>';
+      
+      // Export/Import Section (Manual Backup)
+      html += '<h3 style="color:#f6eec2;border-bottom:2px solid #ff9800;padding-bottom:10px;margin-top:30px;">💾 Backup & Restore (Manual Sync)</h3>';
+      html += '<div style="background:rgba(255,152,0,0.1);padding:15px;border-radius:6px;border-left:4px solid #ff9800;margin-bottom:15px;">';
+      html += '<p style="color:#d0c6a0;margin:0 0 15px 0;font-size:12px;">Download your data as a JSON file to back it up or share between devices.</p>';
+      html += '<div style="display:flex;gap:10px;margin-bottom:15px;">';
+      html += '<button id="exportDataBtn" style="flex:1;padding:12px;background:#ff9800;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;">⬇️ Export Data (JSON)</button>';
+      html += '<button id="importDataBtn" style="flex:1;padding:12px;background:#667eea;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;">⬆️ Import Data (JSON)</button>';
+      html += '</div>';
+      html += '<input type="file" id="importFileInput" accept=".json" style="display:none;" />';
+      html += '<div id="backupMessage" style="padding:10px;border-radius:6px;display:none;text-align:center;font-weight:bold;font-size:12px;"></div>';
+      html += '<p style="color:#999;margin:15px 0 0 0;font-size:11px;">💡 <strong>How to Use:</strong> Export on Device A → Share file → Import on Device B</p>';
       html += '</div>';
       
       html += '</div>';
@@ -1431,159 +1471,150 @@
       });
 
       // Cloud Sync: Test Connection
-      document.getElementById('testCloudBtn').addEventListener('click', async () => {
-        let url = document.getElementById('cloudSyncUrl').value.trim();
-        const msgDiv = document.getElementById('cloudMessage');
-        
-        if (!url) {
-          msgDiv.style.display = 'block';
-          msgDiv.style.background = '#ff6b6b';
-          msgDiv.style.color = '#fff';
-          msgDiv.textContent = 'Please paste a Cloud Blob URL';
-          return;
-        }
-        
-        // Validate URL format
-        if (!url.includes('jsonblob.com')) {
-          msgDiv.style.display = 'block';
-          msgDiv.style.background = '#ff6b6b';
-          msgDiv.style.color = '#fff';
-          msgDiv.textContent = '❌ Invalid URL. Must be from jsonblob.com';
-          return;
-        }
-        
-        // Auto-convert URL to API format if needed
-        if (!url.includes('/api/jsonblob/')) {
-          // Extract ID from URL (last part after final /)
-          const parts = url.split('/');
-          const id = parts[parts.length - 1];
-          url = `https://jsonblob.com/api/jsonblob/${id}`;
-          document.getElementById('cloudSyncUrl').value = url; // Update input with correct format
-        }
-        
-        try {
-          msgDiv.textContent = '⏳ Testing connection...';
+      // Supabase Sync Now button
+      const syncNowBtn = document.getElementById('syncNowBtn');
+      if (syncNowBtn) {
+        syncNowBtn.addEventListener('click', async () => {
+          const msgDiv = document.getElementById('syncStatusMessage');
+          msgDiv.textContent = '⏳ Uploading data to Supabase...';
           msgDiv.style.display = 'block';
           msgDiv.style.background = '#667eea';
+          msgDiv.style.color = '#fff';
           
-          const response = await fetch(url, {
-            method: 'GET',
-            headers: {'Content-Type': 'application/json'}
-          });
+          const success = await syncToCloud();
           
-          if (response.ok) {
-            const data = await response.json();
+          if (success) {
             msgDiv.style.background = '#25d366';
             msgDiv.style.color = '#000';
-            msgDiv.textContent = '✅ Connection successful! ' + (data.adminProducts ? data.adminProducts.length + ' products found.' : 'Empty blob - ready to sync.');
-          } else if (response.status === 404) {
-            msgDiv.style.background = '#ff6b6b';
-            msgDiv.style.color = '#fff';
-            msgDiv.textContent = '❌ Blob not found (404). Check your ID and try again.';
+            msgDiv.textContent = '✅ Data synced successfully! Changes visible on all devices.';
           } else {
             msgDiv.style.background = '#ff6b6b';
             msgDiv.style.color = '#fff';
-            msgDiv.textContent = '❌ Server error (HTTP ' + response.status + '). Try again later.';
+            msgDiv.textContent = '❌ Sync failed. Check your internet connection.';
           }
-        } catch (error) {
-          msgDiv.style.background = '#ff6b6b';
-          msgDiv.style.color = '#fff';
-          if (error.message.includes('CORS')) {
-            msgDiv.textContent = '❌ CORS Error: jsonblob.com blocked the request. Try from a different device or contact support.';
-          } else if (error.message.includes('Failed to fetch')) {
-            msgDiv.textContent = '❌ Network error: Check your internet connection and URL.';
-          } else {
-            msgDiv.textContent = '❌ Error: ' + error.message;
-          }
-        }
-      });
-
-      // Cloud Sync: Save URL and Sync
-      document.getElementById('saveCloudBtn').addEventListener('click', async () => {
-        let url = document.getElementById('cloudSyncUrl').value.trim();
-        const msgDiv = document.getElementById('cloudMessage');
-        
-        if (!url) {
-          msgDiv.style.display = 'block';
-          msgDiv.style.background = '#ff6b6b';
-          msgDiv.style.color = '#fff';
-          msgDiv.textContent = 'Please paste a Cloud Blob URL first';
-          return;
-        }
-        
-        // Auto-convert URL to API format if needed
-        if (!url.includes('/api/jsonblob/')) {
-          const parts = url.split('/');
-          const id = parts[parts.length - 1];
-          url = `https://jsonblob.com/api/jsonblob/${id}`;
-          document.getElementById('cloudSyncUrl').value = url; // Update input with correct format
-        }
-        
-        // Save the URL to localStorage (this is what the sync functions will read)
-        localStorage.setItem('cloudSyncUrl', url);
-        
-        // Now sync to cloud using the standard function
-        msgDiv.textContent = '⏳ Syncing data to cloud...';
-        msgDiv.style.display = 'block';
-        msgDiv.style.background = '#667eea';
-        msgDiv.style.color = '#fff';
-        
-        try {
-          await syncToCloud();
           
-          // Check if it actually synced by trying to read back
-          const response = await fetch(url);
-          if (response.ok) {
-            const data = await response.json();
+          setTimeout(() => { msgDiv.style.display = 'none'; }, 3000);
+        });
+      }
+
+      // Supabase Refresh Now button
+      const refreshNowBtn = document.getElementById('refreshNowBtn');
+      if (refreshNowBtn) {
+        refreshNowBtn.addEventListener('click', async () => {
+          const msgDiv = document.getElementById('syncStatusMessage');
+          msgDiv.textContent = '⏳ Downloading latest data from Supabase...';
+          msgDiv.style.display = 'block';
+          msgDiv.style.background = '#667eea';
+          msgDiv.style.color = '#fff';
+          
+          const success = await syncFromCloud();
+          
+          if (success) {
+            // Reload displays
+            loadAdminProducts();
+            loadAdminBrands();
+            displayProducts();
+            
             msgDiv.style.background = '#25d366';
             msgDiv.style.color = '#000';
-            msgDiv.textContent = '✅ Data synced successfully to cloud! ' + 
-              'Products: ' + data.adminProducts.length + ', ' +
-              'Brands: ' + data.adminBrands.length;
-            console.log('✅ Cloud sync configured and working');
+            msgDiv.textContent = '✅ Data pulled successfully! UI updated.';
+          } else {
+            msgDiv.style.background = '#ff6b6b';
+            msgDiv.style.color = '#fff';
+            msgDiv.textContent = '❌ Refresh failed. Check your internet connection.';
           }
+          
+          setTimeout(() => { msgDiv.style.display = 'none'; }, 3000);
+        });
+      }
+
+      // Export Data as JSON File
+      document.getElementById('exportDataBtn').addEventListener('click', () => {
+        const backupMsg = document.getElementById('backupMessage');
+        
+        try {
+          const exportData = {
+            exportDate: new Date().toISOString(),
+            adminPassword: localStorage.getItem('adminPassword'),
+            adminProducts: JSON.parse(localStorage.getItem('adminProducts') || '[]'),
+            adminBrands: JSON.parse(localStorage.getItem('adminBrands') || '[]'),
+            bnplHistory: JSON.parse(localStorage.getItem('bnplHistory') || '[]')
+          };
+          
+          const dataStr = JSON.stringify(exportData, null, 2);
+          const dataBlob = new Blob([dataStr], {type: 'application/json'});
+          const url = URL.createObjectURL(dataBlob);
+          
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'anuththara-backup-' + new Date().toISOString().split('T')[0] + '.json';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          backupMsg.style.display = 'block';
+          backupMsg.style.background = '#25d366';
+          backupMsg.style.color = '#000';
+          backupMsg.textContent = '✅ Data exported successfully! File: anuththara-backup-' + new Date().toISOString().split('T')[0] + '.json';
         } catch (error) {
-          msgDiv.style.background = '#ff6b6b';
-          msgDiv.style.color = '#fff';
-          msgDiv.textContent = '❌ Sync failed: ' + error.message;
+          backupMsg.style.display = 'block';
+          backupMsg.style.background = '#ff6b6b';
+          backupMsg.style.color = '#fff';
+          backupMsg.textContent = '❌ Export failed: ' + error.message;
         }
       });
 
-      // Cloud Sync: Refresh from cloud
-      document.getElementById('refreshCloudBtn').addEventListener('click', async () => {
-        const msgDiv = document.getElementById('cloudMessage');
-        const url = getCloudUrl();
+      // Import Data from JSON File
+      document.getElementById('importDataBtn').addEventListener('click', () => {
+        document.getElementById('importFileInput').click();
+      });
+
+      document.getElementById('importFileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        const backupMsg = document.getElementById('backupMessage');
         
-        if (!url) {
-          msgDiv.style.display = 'block';
-          msgDiv.style.background = '#ff6b6b';
-          msgDiv.style.color = '#fff';
-          msgDiv.textContent = 'No cloud URL configured. Set one up first!';
-          return;
-        }
+        if (!file) return;
         
-        msgDiv.textContent = '⏳ Fetching latest data from cloud...';
-        msgDiv.style.display = 'block';
-        msgDiv.style.background = '#667eea';
-        msgDiv.style.color = '#fff';
-        
-        try {
-          await syncFromCloud();
-          
-          // Reload the display
-          loadAdminProducts();
-          loadAdminBrands();
-          displayProducts();
-          
-          msgDiv.style.background = '#25d366';
-          msgDiv.style.color = '#000';
-          msgDiv.textContent = '✅ Data refreshed from cloud! Products updated.';
-          console.log('✅ Data refreshed from cloud');
-        } catch (error) {
-          msgDiv.style.background = '#ff6b6b';
-          msgDiv.style.color = '#fff';
-          msgDiv.textContent = '❌ Refresh failed: ' + error.message;
-        }
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          try {
+            const importData = JSON.parse(event.target.result);
+            
+            // Validate imported data
+            if (!importData.adminProducts || !importData.adminBrands) {
+              throw new Error('Invalid backup file format');
+            }
+            
+            // Confirm before overwriting
+            if (confirm('⚠️ This will replace all your current data! Continue?')) {
+              // Import all data
+              localStorage.setItem('adminPassword', importData.adminPassword || 'foxer');
+              localStorage.setItem('adminProducts', JSON.stringify(importData.adminProducts || []));
+              localStorage.setItem('adminBrands', JSON.stringify(importData.adminBrands || []));
+              localStorage.setItem('bnplHistory', JSON.stringify(importData.bnplHistory || []));
+              
+              // Reload displays
+              loadAdminProducts();
+              loadAdminBrands();
+              displayProducts();
+              
+              backupMsg.style.display = 'block';
+              backupMsg.style.background = '#25d366';
+              backupMsg.style.color = '#000';
+              backupMsg.textContent = '✅ Data imported successfully! ' + importData.adminProducts.length + ' products, ' + importData.adminBrands.length + ' brands restored.';
+              
+              // Mark for cloud sync if configured
+              markDataForCloudSync();
+            }
+          } catch (error) {
+            backupMsg.style.display = 'block';
+            backupMsg.style.background = '#ff6b6b';
+            backupMsg.style.color = '#fff';
+            backupMsg.textContent = '❌ Import failed: ' + error.message;
+          }
+        };
+        reader.readAsText(file);
       });
 
       // Add product button
@@ -3674,3 +3705,4 @@
 
 </body>
 </html>
+
