@@ -821,45 +821,33 @@
     // Sync data to Supabase
     async function syncToCloud() {
       try {
-        console.log('📤 Starting sync to Supabase...');
-        console.log('Device ID:', DEVICE_ID);
-        
         const adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
         const adminBrands = JSON.parse(localStorage.getItem('adminBrands') || '[]');
         const bnplHistory = JSON.parse(localStorage.getItem('bnplHistory') || '[]');
         
-        console.log('📤 Data to sync - Products:', adminProducts.length, 'Brands:', adminBrands.length);
-        
-        const updateData = {
-          admin_password: localStorage.getItem('adminPassword'),
-          admin_products: adminProducts,
-          admin_brands: adminBrands,
-          bnpl_history: bnplHistory,
-          updated_at: new Date().toISOString(),
-          updated_by_device: DEVICE_ID
-        };
-        
-        console.log('Sending update data:', JSON.stringify(updateData).substring(0, 200) + '...');
+        console.log('📤 Syncing to Supabase... Products:', adminProducts.length, 'Brands:', adminBrands.length);
         
         const { data, error } = await supabase
           .from('app_data')
-          .update(updateData)
+          .update({
+            admin_password: localStorage.getItem('adminPassword'),
+            admin_products: adminProducts,
+            admin_brands: adminBrands,
+            bnpl_history: bnplHistory,
+            updated_at: new Date().toISOString(),
+            updated_by_device: DEVICE_ID
+          })
           .eq('id', 1);
         
         if (error) {
-          console.error('❌ Supabase Error Code:', error.code);
-          console.error('❌ Supabase Error Message:', error.message);
-          console.error('❌ Full Error:', error);
-          alert('❌ Sync Failed: ' + error.message + '\n\nCheck browser console for details');
+          console.error('❌ Sync to Supabase failed:', error.message);
           return false;
         }
         
-        console.log('✅ Data synced to Supabase successfully');
-        console.log('Response data:', data);
+        console.log('✅ Data synced to Supabase');
         return true;
       } catch (error) {
-        console.error('❌ Sync exception:', error);
-        alert('❌ Sync Error: ' + error.message);
+        console.error('❌ Sync failed:', error.message);
         return false;
       }
     }
@@ -867,7 +855,7 @@
     // Fetch data from Supabase
     async function syncFromCloud() {
       try {
-        console.log('📥 Starting fetch from Supabase...');
+        console.log('📥 Fetching data from Supabase...');
         
         const { data, error } = await supabase
           .from('app_data')
@@ -876,98 +864,59 @@
           .single();
         
         if (error) {
-          console.error('❌ Fetch Error Code:', error.code);
-          console.error('❌ Fetch Error Message:', error.message);
-          console.error('❌ Full Error:', error);
+          console.error('❌ Fetch from Supabase failed:', error.message);
           return false;
         }
         
-        console.log('✅ Data fetched from Supabase:', data);
-        
         // Update local storage with cloud data
-        if (data) {
-          localStorage.setItem('adminPassword', data.admin_password || 'foxer');
-          localStorage.setItem('adminProducts', JSON.stringify(data.admin_products || []));
-          localStorage.setItem('adminBrands', JSON.stringify(data.admin_brands || []));
-          localStorage.setItem('bnplHistory', JSON.stringify(data.bnpl_history || []));
-          console.log('✅ Local storage updated from Supabase');
-        }
+        localStorage.setItem('adminPassword', data.admin_password || 'foxer');
+        localStorage.setItem('adminProducts', JSON.stringify(data.admin_products || []));
+        localStorage.setItem('adminBrands', JSON.stringify(data.admin_brands || []));
+        localStorage.setItem('bnplHistory', JSON.stringify(data.bnpl_history || []));
         
+        console.log('✅ Data synced from Supabase');
         return true;
       } catch (error) {
-        console.error('❌ Fetch exception:', error);
+        console.error('❌ Fetch failed:', error.message);
         return false;
       }
     }
 
     // Set up real-time listener for changes from other devices
     function setupRealtimeSync() {
-      console.log('🔄 Setting up real-time sync with Supabase...');
-      console.log('Device ID:', DEVICE_ID);
+      console.log('🔄 Setting up real-time sync...');
       
-      const subscription = supabase
+      supabase
         .channel('app_data_changes')
         .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'app_data' },
-          (payload) => {
-            console.log('📨 Received update from Supabase:', payload);
-            console.log('Updated by device:', payload.new.updated_by_device, 'Current device:', DEVICE_ID);
-            
+          async (payload) => {
             // Only update if change came from different device
-            if (payload.new && payload.new.updated_by_device !== DEVICE_ID) {
-              console.log('🔄 Change from different device detected, updating local data...');
+            if (payload.new.updated_by_device !== DEVICE_ID) {
+              console.log('🔄 Received update from another device, refreshing...');
               
-              try {
-                // Update local storage
-                localStorage.setItem('adminPassword', payload.new.admin_password || 'foxer');
-                localStorage.setItem('adminProducts', JSON.stringify(payload.new.admin_products || []));
-                localStorage.setItem('adminBrands', JSON.stringify(payload.new.admin_brands || []));
-                localStorage.setItem('bnplHistory', JSON.stringify(payload.new.bnpl_history || []));
-                
-                console.log('✅ Local storage updated');
-                
-                // Refresh UI
-                if (window.displayProducts) {
-                  displayProducts();
-                  console.log('✅ Products display refreshed');
-                }
-                if (window.loadAdminBrands) {
-                  loadAdminBrands();
-                  console.log('✅ Brands display refreshed');
-                }
-                
-                console.log('✅ UI updated with latest data from another device');
-              } catch (err) {
-                console.error('❌ Error updating UI:', err);
-              }
-            } else {
-              console.log('ℹ️ Change is from same device, ignoring');
+              // Update local storage
+              localStorage.setItem('adminPassword', payload.new.admin_password || 'foxer');
+              localStorage.setItem('adminProducts', JSON.stringify(payload.new.admin_products || []));
+              localStorage.setItem('adminBrands', JSON.stringify(payload.new.admin_brands || []));
+              localStorage.setItem('bnplHistory', JSON.stringify(payload.new.bnpl_history || []));
+              
+              // Refresh UI
+              if (window.displayProducts) displayProducts();
+              if (window.loadAdminBrands) loadAdminBrands();
+              
+              console.log('✅ UI updated with latest data');
             }
           }
         )
-        .subscribe((status) => {
-          console.log('📡 Real-time subscription status:', status);
-        });
-      
-      console.log('✅ Real-time listener setup complete');
+        .subscribe();
     }
 
     // Sync from cloud on page load
     window.addEventListener('DOMContentLoaded', async () => {
-      console.log('📱 Page loading, initializing Supabase sync...');
-      try {
-        const success = await syncFromCloud();
-        if (success) {
-          console.log('✅ Initial sync from Supabase succeeded');
-        } else {
-          console.warn('⚠️ Initial sync from Supabase failed');
-        }
-      } catch (err) {
-        console.error('❌ Error during initial sync:', err);
-      }
-      
+      console.log('📱 Page loading, syncing from Supabase...');
+      await syncFromCloud();
       setupRealtimeSync(); // Start listening for real-time updates
-      
       // Reload products after syncing
       if (window.displayProducts) {
         displayProducts();
@@ -1506,7 +1455,13 @@
         
         // Store new password in localStorage
         localStorage.setItem('adminPassword', newPass);
-        markDataForCloudSync(); // Sync new password to cloud
+        
+        // Trigger cloud sync
+        if (window.markDataForCloudSync) {
+          window.markDataForCloudSync();
+        } else {
+          syncToCloud();
+        }
         
         // Update the password check in the showAdminPanel function
         window.adminPassword = newPass;
@@ -1678,6 +1633,9 @@
         const imageInput = document.getElementById('productImage');
 
         if (name && category && brand && price >= 0 && stock >= 0) {
+          // Load current products
+          let adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
+          
           // Handle product image
           if (imageInput.files.length > 0) {
             const file = imageInput.files[0];
@@ -1687,7 +1645,11 @@
               adminProducts.push(newProduct);
               localStorage.setItem('adminProducts', JSON.stringify(adminProducts));
               console.log('✅ Product added:', name, '- Syncing to cloud...');
-              markDataForCloudSync(); // Sync new product to cloud
+              if (window.markDataForCloudSync) {
+                window.markDataForCloudSync();
+              } else {
+                syncToCloud();
+              }
               document.getElementById('productName').value = '';
               document.getElementById('productCategory').value = '';
               document.getElementById('productBrand').value = '';
@@ -1711,7 +1673,11 @@
             adminProducts.push(newProduct);
             localStorage.setItem('adminProducts', JSON.stringify(adminProducts));
             console.log('✅ Product added (no image):', name, '- Syncing to cloud...');
-            markDataForCloudSync(); // Sync product to cloud
+            if (window.markDataForCloudSync) {
+              window.markDataForCloudSync();
+            } else {
+              syncToCloud();
+            }
             document.getElementById('productName').value = '';
             document.getElementById('productCategory').value = '';
             document.getElementById('productBrand').value = '';
@@ -1767,7 +1733,11 @@
             adminBrands.push(newBrand);
             localStorage.setItem('adminBrands', JSON.stringify(adminBrands));
             console.log('✅ Brand added:', brandName, '- Syncing to cloud...');
-            markDataForCloudSync(); // Sync brand to cloud
+            if (window.markDataForCloudSync) {
+              window.markDataForCloudSync();
+            } else {
+              syncToCloud();
+            }
             document.getElementById('brandName').value = '';
             document.getElementById('brandImage').value = '';
             document.getElementById('brandImagePreview').style.display = 'none';
@@ -1783,7 +1753,11 @@
           adminBrands.push(newBrand);
           localStorage.setItem('adminBrands', JSON.stringify(adminBrands));
           console.log('✅ Brand added (no image):', brandName, '- Syncing to cloud...');
-          markDataForCloudSync(); // Sync brand to cloud
+          if (window.markDataForCloudSync) {
+            window.markDataForCloudSync();
+          } else {
+            syncToCloud();
+          }
           document.getElementById('brandName').value = '';
           document.getElementById('brandImage').value = '';
           document.getElementById('brandImagePreview').style.display = 'none';
