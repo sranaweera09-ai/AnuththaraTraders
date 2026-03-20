@@ -1432,7 +1432,7 @@
 
       // Cloud Sync: Test Connection
       document.getElementById('testCloudBtn').addEventListener('click', async () => {
-        const url = document.getElementById('cloudSyncUrl').value.trim();
+        let url = document.getElementById('cloudSyncUrl').value.trim();
         const msgDiv = document.getElementById('cloudMessage');
         
         if (!url) {
@@ -1443,31 +1443,64 @@
           return;
         }
         
+        // Validate URL format
+        if (!url.includes('jsonblob.com')) {
+          msgDiv.style.display = 'block';
+          msgDiv.style.background = '#ff6b6b';
+          msgDiv.style.color = '#fff';
+          msgDiv.textContent = '❌ Invalid URL. Must be from jsonblob.com';
+          return;
+        }
+        
+        // Auto-convert URL to API format if needed
+        if (!url.includes('/api/jsonblob/')) {
+          // Extract ID from URL (last part after final /)
+          const parts = url.split('/');
+          const id = parts[parts.length - 1];
+          url = `https://jsonblob.com/api/jsonblob/${id}`;
+          document.getElementById('cloudSyncUrl').value = url; // Update input with correct format
+        }
+        
         try {
           msgDiv.textContent = '⏳ Testing connection...';
           msgDiv.style.display = 'block';
           msgDiv.style.background = '#667eea';
           
-          const response = await fetch(url);
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'}
+          });
+          
           if (response.ok) {
+            const data = await response.json();
             msgDiv.style.background = '#25d366';
             msgDiv.style.color = '#000';
-            msgDiv.textContent = '✅ Connection successful! Click "Save & Sync" to start syncing.';
+            msgDiv.textContent = '✅ Connection successful! ' + (data.adminProducts ? data.adminProducts.length + ' products found.' : 'Empty blob - ready to sync.');
+          } else if (response.status === 404) {
+            msgDiv.style.background = '#ff6b6b';
+            msgDiv.style.color = '#fff';
+            msgDiv.textContent = '❌ Blob not found (404). Check your ID and try again.';
           } else {
             msgDiv.style.background = '#ff6b6b';
             msgDiv.style.color = '#fff';
-            msgDiv.textContent = '❌ Failed to connect. Check your URL and try again.';
+            msgDiv.textContent = '❌ Server error (HTTP ' + response.status + '). Try again later.';
           }
         } catch (error) {
           msgDiv.style.background = '#ff6b6b';
           msgDiv.style.color = '#fff';
-          msgDiv.textContent = '❌ Connection error: ' + error.message;
+          if (error.message.includes('CORS')) {
+            msgDiv.textContent = '❌ CORS Error: jsonblob.com blocked the request. Try from a different device or contact support.';
+          } else if (error.message.includes('Failed to fetch')) {
+            msgDiv.textContent = '❌ Network error: Check your internet connection and URL.';
+          } else {
+            msgDiv.textContent = '❌ Error: ' + error.message;
+          }
         }
       });
 
       // Cloud Sync: Save URL and Sync
       document.getElementById('saveCloudBtn').addEventListener('click', async () => {
-        const url = document.getElementById('cloudSyncUrl').value.trim();
+        let url = document.getElementById('cloudSyncUrl').value.trim();
         const msgDiv = document.getElementById('cloudMessage');
         
         if (!url) {
@@ -1476,6 +1509,14 @@
           msgDiv.style.color = '#fff';
           msgDiv.textContent = 'Please paste a Cloud Blob URL first';
           return;
+        }
+        
+        // Auto-convert URL to API format if needed
+        if (!url.includes('/api/jsonblob/')) {
+          const parts = url.split('/');
+          const id = parts[parts.length - 1];
+          url = `https://jsonblob.com/api/jsonblob/${id}`;
+          document.getElementById('cloudSyncUrl').value = url; // Update input with correct format
         }
         
         // Save the URL to localStorage (this is what the sync functions will read)
