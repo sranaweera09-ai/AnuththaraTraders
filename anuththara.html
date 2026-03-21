@@ -1671,6 +1671,16 @@
     }
 
     function openAdminPanel() {
+      // Clean up any previous admin panel first
+      const prevOverlay = document.getElementById('adminPanelOverlay');
+      if (prevOverlay) {
+        prevOverlay.remove();
+      }
+      if (window.adminPanelEscapeHandler) {
+        document.removeEventListener('keydown', window.adminPanelEscapeHandler);
+        window.adminPanelEscapeHandler = null;
+      }
+
       let html = '<div style="background:#1a1a1a;max-width:1200px;margin:30px auto;border-radius:12px;padding:24px;color:#f6eec2;position:relative;z-index:1001;">';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">';
       html += '<h2 style="margin:0;">Admin Management Panel</h2>';
@@ -1893,6 +1903,12 @@
       html += '</div>';
 
       // Create overlay
+      // Remove any existing overlay first
+      const existingOverlay = document.getElementById('adminPanelOverlay');
+      if (existingOverlay) {
+        existingOverlay.remove();
+      }
+
       const overlay = document.createElement('div');
       overlay.id = 'adminPanelOverlay';
       overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
@@ -1909,10 +1925,54 @@
       }
 
       // Close button
-      document.getElementById('closeAdminPanel').addEventListener('click', () => {
-        overlay.remove();
-        loadAdminProducts();
+      const closeBtn = document.getElementById('closeAdminPanel');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          try {
+            const adminOverlay = document.getElementById('adminPanelOverlay');
+            if (adminOverlay) {
+              adminOverlay.remove();
+              // Clear any references
+              window.adminPanelEscapeHandler = null;
+              loadAdminProducts();
+            }
+          } catch (e) {
+            console.error('Error closing admin panel:', e);
+          }
+        });
+      }
+
+      // Close on overlay click
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          try {
+            overlay.remove();
+            window.adminPanelEscapeHandler = null;
+            loadAdminProducts();
+          } catch (e) {
+            console.error('Error closing admin panel:', e);
+          }
+        }
       });
+
+      // Close on Escape key - store handler globally to remove it later
+      const escapeHandler = (e) => {
+        if (e.key === 'Escape') {
+          try {
+            const adminOverlay = document.getElementById('adminPanelOverlay');
+            if (adminOverlay) {
+              adminOverlay.remove();
+              document.removeEventListener('keydown', escapeHandler);
+              window.adminPanelEscapeHandler = null;
+              loadAdminProducts();
+            }
+          } catch (e) {
+            console.error('Error closing admin panel:', e);
+          }
+        }
+      };
+      window.adminPanelEscapeHandler = escapeHandler;
+      document.addEventListener('keydown', escapeHandler);
 
       // Tab switching
       document.getElementById('productsTab').addEventListener('click', () => {
@@ -3129,6 +3189,11 @@
 
     // Load and display admin products in products section
     function loadAdminProducts() {
+      // Only update if admin panel is not open
+      if (document.getElementById('adminPanelOverlay')) {
+        return; // Don't update while panel is open
+      }
+      
       const productsDiv = document.getElementById('adminProductsList');
       if (productsDiv) {
         adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
