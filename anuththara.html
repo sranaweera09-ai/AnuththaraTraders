@@ -1638,39 +1638,52 @@
     // Admin products management - data stored in localStorage
     let adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
 
-    // Admin button functionality - navigate to login page - WRAPPED IN DOMContentLoaded
+    // Admin button functionality - Opens advanced admin panel - WRAPPED IN DOMContentLoaded
     document.addEventListener('DOMContentLoaded', function() {
       const adminAccessBtn = document.getElementById('adminAccessBtn');
       if (adminAccessBtn) {
         adminAccessBtn.addEventListener('click', function(e) {
           e.preventDefault();
-          const adminLoginSection = document.getElementById('admin-login');
-          if (adminLoginSection.style.display === 'none' || adminLoginSection.style.display === '') {
-            adminLoginSection.style.display = 'block';
-            adminLoginSection.scrollIntoView({behavior:'smooth'});
-            setTimeout(() => document.getElementById('adminPasswordInput').focus(), 300);
-          } else {
-            adminLoginSection.style.display = 'none';
-          }
+          showAdminPanel();
         });
       }
     });
 
     function showAdminPanel() {
-      const password = prompt('Enter admin password:');
-        const storedPassword = localStorage.getItem('adminPassword');
+      console.log('🔐 Admin panel request initiated');
+      
+      try {
+        let storedPassword = localStorage.getItem('adminPassword');
+        
+        // If no password set, use default on first login
         if (!storedPassword) {
-          alert('Admin access not configured. Contact management.');
+          storedPassword = '1234';
+          localStorage.setItem('adminPassword', storedPassword);
+          alert('⚠️ Default admin password: 1234\n\nChange this in Settings tab for security!');
+        }
+        
+        const password = prompt('🔐 Enter admin password:');
+        if (password === null) {
+          console.log('User cancelled password prompt');
           return;
         }
+        
         if (password === storedPassword) {
-        openAdminPanel();
-      } else {
-        alert('Invalid password');
+          console.log('✅ Password correct, opening admin panel');
+          openAdminPanel();
+        } else {
+          alert('❌ Invalid password');
+          console.log('❌ Invalid password entered');
+        }
+      } catch (error) {
+        console.error('❌ Error in showAdminPanel:', error);
+        alert('Error: ' + error.message);
       }
     }
 
     function openAdminPanel() {
+      console.log('📋 Building admin panel...');
+      
       // Clean up any previous admin panel first
       const prevOverlay = document.getElementById('adminPanelOverlay');
       if (prevOverlay) {
@@ -1681,21 +1694,107 @@
         window.adminPanelEscapeHandler = null;
       }
 
+      // Load data once for all tabs
+      const adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
+      const orderHistory = JSON.parse(localStorage.getItem('orderHistory') || '[]');
+      const bnplHistory = JSON.parse(localStorage.getItem('bnplHistory') || '[]');
+
+      console.log('✅ Data loaded. Building HTML...');
+
       let html = '<div style="background:#1a1a1a;max-width:1200px;margin:30px auto;border-radius:12px;padding:24px;color:#f6eec2;position:relative;z-index:1001;">';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">';
       html += '<h2 style="margin:0;">Admin Management Panel</h2>';
       html += '<button id="closeAdminPanel" style="background:transparent;border:1px solid #888;color:#f6eec2;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:16px;">✕ Close</button>';
       html += '</div>';
 
-      // TAB NAVIGATION
-      html += '<div style="display:flex;gap:12px;margin-bottom:20px;border-bottom:2px solid #444;">';
-      html += '<button id="productsTab" style="padding:10px 20px;background:#25d366;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;">Products</button>';
-      html += '<button id="brandsTab" style="padding:10px 20px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;">Brands</button>';
-      html += '<button id="historyTab" style="padding:10px 20px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;">Order & BNPL History</button>';
-      html += '<button id="settingsTab" style="padding:10px 20px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;">Settings</button>';
+      // TAB NAVIGATION - ADVANCED TABS
+      html += '<div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:2px solid #444;overflow-x:auto;padding-bottom:5px;">';
+      html += '<button id="dashboardTab" style="padding:10px 16px;background:#25d366;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;font-size:13px;white-space:nowrap;">📊 Dashboard</button>';
+      html += '<button id="productsTab" style="padding:10px 16px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;font-size:13px;white-space:nowrap;">📦 Products</button>';
+      html += '<button id="inventoryTab" style="padding:10px 16px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;font-size:13px;white-space:nowrap;">📊 Inventory</button>';
+      html += '<button id="analyticsTab" style="padding:10px 16px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;font-size:13px;white-space:nowrap;">📈 Analytics</button>';
+      html += '<button id="brandsTab" style="padding:10px 16px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;font-size:13px;white-space:nowrap;">🏷️ Brands</button>';
+      html += '<button id="usersTab" style="padding:10px 16px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;font-size:13px;white-space:nowrap;">👥 Users</button>';
+      html += '<button id="alertsTab" style="padding:10px 16px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;font-size:13px;white-space:nowrap;">🔔 Alerts</button>';
+      html += '<button id="historyTab" style="padding:10px 16px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;font-size:13px;white-space:nowrap;">📋 History</button>';
+      html += '<button id="settingsTab" style="padding:10px 16px;background:#444;color:#fff;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:bold;font-size:13px;white-space:nowrap;">⚙️ Settings</button>';
       html += '</div>';
 
-      // PRODUCTS TAB
+      // DASHBOARD TAB - OVERVIEW
+      html += '<div id="dashboardTabContent" style="display:none;">';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-bottom:24px;">';
+      
+      // Calculate metrics
+      let totalRevenue = 0, totalOrders = 0, lowStockCount = 0, totalProducts = adminProducts.length;
+      orderHistory.forEach(order => {
+        const items = order.order.split(' | ');
+        items.forEach(item => {
+          const match = item.match(/Rs\\.(\\d+)/);
+          if (match) totalRevenue += parseInt(match[1]) || 0;
+        });
+        totalOrders++;
+      });
+      adminProducts.forEach(prod => {
+        if (prod.stock < 10) lowStockCount++;
+      });
+      
+      // Metric Cards
+      html += '<div style="background:linear-gradient(135deg,#1e472e,#0d2817);border:2px solid #25d366;border-radius:12px;padding:20px;box-shadow:0 8px 25px rgba(37,211,102,0.2);">';
+      html += '<div style="color:#999;font-size:12px;margin-bottom:8px;text-transform:uppercase;font-weight:bold;">💰 Total Revenue</div>';
+      html += '<div style="font-size:32px;color:#25d366;font-weight:bold;">Rs.' + totalRevenue.toLocaleString() + '</div>';
+      html += '<div style="color:#999;font-size:11px;margin-top:8px;">From ' + totalOrders + ' orders</div>';
+      html += '</div>';
+      
+      html += '<div style="background:linear-gradient(135deg,#1e2847,#0d1a2d);border:2px solid #667eea;border-radius:12px;padding:20px;box-shadow:0 8px 25px rgba(102,126,234,0.2);">';
+      html += '<div style="color:#999;font-size:12px;margin-bottom:8px;text-transform:uppercase;font-weight:bold;">📦 Total Products</div>';
+      html += '<div style="font-size:32px;color:#667eea;font-weight:bold;">' + totalProducts + '</div>';
+      html += '<div style="color:#999;font-size:11px;margin-top:8px;">In catalog</div>';
+      html += '</div>';
+      
+      html += '<div style="background:linear-gradient(135deg,#472e1e,#2d1707);border:2px solid #ff9800;border-radius:12px;padding:20px;box-shadow:0 8px 25px rgba(255,152,0,0.2);">';
+      html += '<div style="color:#999;font-size:12px;margin-bottom:8px;text-transform:uppercase;font-weight:bold;">⚠️ Low Stock Items</div>';
+      html += '<div style="font-size:32px;color:#ff9800;font-weight:bold;">' + lowStockCount + '</div>';
+      html += '<div style="color:#999;font-size:11px;margin-top:8px;">Need reordering</div>';
+      html += '</div>';
+      
+      html += '<div style="background:linear-gradient(135deg,#472e1e,#2d1707);border:2px solid #ff6b6b;border-radius:12px;padding:20px;box-shadow:0 8px 25px rgba(255,107,107,0.2);">';
+      html += '<div style="color:#999;font-size:12px;margin-bottom:8px;text-transform:uppercase;font-weight:bold;">🛍️ Total Orders</div>';
+      html += '<div style="font-size:32px;color:#ff6b6b;font-weight:bold;">' + totalOrders + '</div>';
+      html += '<div style="color:#999;font-size:11px;margin-top:8px;">All time</div>';
+      html += '</div>';
+      
+      html += '</div>';
+      
+      // Quick Actions
+      html += '<div style="background:#222;border:1px solid #444;border-radius:12px;padding:20px;margin-bottom:24px;">';
+      html += '<h3 style="color:#f6eec2;margin-top:0;border-bottom:2px solid #25d366;padding-bottom:12px;">🚀 Quick Actions</h3>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">';
+      html += '<button onclick="document.getElementById(\'productsTab\').click();" style="padding:12px;background:linear-gradient(135deg,#25d366,#20b854);color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">+ Add Product</button>';
+      html += '<button onclick="document.getElementById(\'brandsTab\').click();" style="padding:12px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">+ Add Brand</button>';
+      html += '<button onclick="document.getElementById(\'inventoryTab\').click();" style="padding:12px;background:linear-gradient(135deg,#ff9800,#f57c00);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">⚙️ Manage Stock</button>';
+      html += '<button onclick="document.getElementById(\'analyticsTab\').click();" style="padding:12px;background:linear-gradient(135deg,#2196f3,#1976d2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">📊 View Reports</button>';
+      html += '</div>';
+      html += '</div>';
+      
+      // Recent Orders Widget
+      html += '<div style="background:#222;border:1px solid #444;border-radius:12px;padding:20px;">';
+      html += '<h3 style="color:#f6eec2;margin-top:0;border-bottom:2px solid #25d366;padding-bottom:12px;">📋 Recent Orders (Last 5)</h3>';
+      if (orderHistory.length === 0) {
+        html += '<div style="padding:20px;text-align:center;color:#999;">No orders yet</div>';
+      } else {
+        html += '<div style="display:flex;flex-direction:column;gap:10px;">';
+        orderHistory.slice(-5).reverse().forEach(order => {
+          html += '<div style="background:#111;padding:12px;border-radius:8px;border-left:4px solid #25d366;">';
+          html += '<div style="color:#f6eec2;font-weight:bold;margin-bottom:4px;">' + order.name + '</div>';
+          html += '<div style="color:#999;font-size:11px;">📞 ' + order.phone + ' | 📍 ' + order.city + '</div>';
+          html += '<div style="color:#f0e6b8;font-size:11px;margin-top:4px;">Delivery: ' + order.day + '/' + order.month + '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+      
+      html += '</div>';
       html += '<div id="productsTabContent" style="display:block;">';
       // Add Product Form
       html += '<div style="background:#222;padding:16px;border-radius:8px;margin-bottom:20px;border:1px solid #444;">';
@@ -1728,7 +1827,6 @@
       html += '<h3 style="color:#f6eec2;">Current Products</h3>';
       html += '<div style="max-height:400px;overflow-y:auto;border:1px solid #444;border-radius:6px;">';
       
-      adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
       if (adminProducts.length === 0) {
         html += '<div style="padding:20px;text-align:center;color:#999;">No products added yet</div>';
       } else {
@@ -1745,6 +1843,123 @@
       
       html += '</div>';
       html += '</div>';
+      html += '</div>';
+
+      // INVENTORY TAB - ADVANCED STOCK MANAGEMENT
+      html += '<div id="inventoryTabContent" style="display:none;">';
+      html += '<div style="background:#222;padding:16px;border-radius:8px;margin-bottom:20px;border:1px solid #444;">';
+      html += '<h3 style="margin-top:0;color:#f6eec2;">⚙️ Inventory Settings</h3>';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">';
+      html += '<div>';
+      html += '<label style="display:block;color:#999;font-size:11px;margin-bottom:4px;text-transform:uppercase;font-weight:bold;">Low Stock Alert Threshold</label>';
+      html += '<input type="number" id="lowStockThreshold" placeholder="10" min="0" value="10" style="width:100%;padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
+      html += '</div>';
+      html += '<div>';
+      html += '<label style="display:block;color:#999;font-size:11px;margin-bottom:4px;text-transform:uppercase;font-weight:bold;">Reorder Point</label>';
+      html += '<input type="number" id="reorderPoint" placeholder="5" min="0" value="5" style="width:100%;padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
+      html += '</div>';
+      html += '</div>';
+      html += '<button id="saveInventorySettings" style="width:100%;padding:10px;background:#25d366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">Save Settings</button>';
+      html += '</div>';
+
+      // Stock Management Grid
+      html += '<div style="margin-top:20px;">';
+      html += '<h3 style="color:#f6eec2;margin-top:0;border-bottom:2px solid #25d366;padding-bottom:12px;">📊 Stock Levels</h3>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">';
+      
+      adminProducts.forEach((prod, idx) => {
+        const stockStatus = prod.stock > 20 ? '#25d366' : prod.stock > 10 ? '#ff9800' : '#ff6b6b';
+        const stockLabel = prod.stock > 20 ? 'Good' : prod.stock > 10 ? 'Low' : 'Critical';
+        html += '<div style="background:#111;border:2px solid ' + stockStatus + ';border-radius:8px;padding:12px;">';
+        html += '<div style="color:#f6eec2;font-weight:bold;margin-bottom:8px;word-break:break-word;">' + prod.name + '</div>';
+        html += '<div style="background:' + stockStatus + ';color:#000;padding:8px;border-radius:4px;text-align:center;margin-bottom:8px;font-weight:bold;">' + prod.stock + ' units</div>';
+        html += '<div style="color:#999;font-size:11px;margin-bottom:8px;">Status: <span style="color:' + stockStatus + ';font-weight:bold;">' + stockLabel + '</span></div>';
+        html += '<input type="number" class="stockInput" data-idx="' + idx + '" value="' + prod.stock + '" min="0" style="width:100%;padding:6px;border-radius:4px;border:1px solid #444;background:#222;color:#f6eec2;margin-bottom:8px;box-sizing:border-box;">';
+        html += '<button class="updateStockBtn" data-idx="' + idx + '" style="width:100%;padding:6px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:11px;">Update</button>';
+        html += '</div>';
+      });
+      
+      html += '</div>';
+      html += '</div>';
+      html += '</div>';
+
+      // ANALYTICS TAB - REPORTS & INSIGHTS
+      html += '<div id="analyticsTabContent" style="display:none;">';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-bottom:24px;">';
+      
+      // Calculate analytics
+      let topProducts = {}, categoryCount = {}, monthlySales = {};
+      orderHistory.forEach(order => {
+        const items = order.order.split(' | ');
+        items.forEach(item => {
+          topProducts[item] = (topProducts[item] || 0) + 1;
+        });
+      });
+      adminProducts.forEach(prod => {
+        categoryCount[prod.category] = (categoryCount[prod.category] || 0) + 1;
+      });
+      
+      // Analytics Cards
+      html += '<div style="background:linear-gradient(135deg,#1e472e,#0d2817);border:2px solid #25d366;border-radius:12px;padding:16px;">';
+      html += '<div style="color:#999;font-size:11px;margin-bottom:8px;text-transform:uppercase;font-weight:bold;">📈 Avg Order Value</div>';
+      html += '<div style="font-size:28px;color:#25d366;font-weight:bold;">Rs.' + (totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0) + '</div>';
+      html += '</div>';
+      
+      html += '<div style="background:linear-gradient(135deg,#1e2847,#0d1a2d);border:2px solid #667eea;border-radius:12px;padding:16px;">';
+      html += '<div style="color:#999;font-size:11px;margin-bottom:8px;text-transform:uppercase;font-weight:bold;">📦 Categories</div>';
+      html += '<div style="font-size:28px;color:#667eea;font-weight:bold;">' + Object.keys(categoryCount).length + '</div>';
+      html += '</div>';
+      
+      html += '<div style="background:linear-gradient(135deg,#472e1e,#2d1707);border:2px solid #ff9800;border-radius:12px;padding:16px;">';
+      html += '<div style="color:#999;font-size:11px;margin-bottom:8px;text-transform:uppercase;font-weight:bold;">🎯 BNPL Apps</div>';
+      html += '<div style="font-size:28px;color:#ff9800;font-weight:bold;">' + bnplHistory.length + '</div>';
+      html += '</div>';
+      
+      html += '</div>';
+      
+      // Top Products Table
+      html += '<div style="background:#222;border:1px solid #444;border-radius:8px;padding:16px;margin-bottom:20px;">';
+      html += '<h3 style="margin-top:0;color:#f6eec2;border-bottom:2px solid #25d366;padding-bottom:12px;">🏆 Top Selling Products</h3>';
+      html += '<div style="max-height:300px;overflow-y:auto;">';
+      const sortedProducts = Object.entries(topProducts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      if (sortedProducts.length === 0) {
+        html += '<div style="padding:20px;text-align:center;color:#999;">No sales data yet</div>';
+      } else {
+        sortedProducts.forEach((item, idx) => {
+          html += '<div style="padding:10px;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;">';
+          html += '<span style="color:#f6eec2;flex:1;">' + (idx + 1) + '. ' + item[0].substring(0, 40) + '</span>';
+          html += '<span style="background:#25d366;color:#000;padding:4px 12px;border-radius:4px;font-weight:bold;font-size:12px;">' + item[1] + ' sold</span>';
+          html += '</div>';
+        });
+      }
+      html += '</div>';
+      html += '</div>';
+      
+      // Category Distribution
+      html += '<div style="background:#222;border:1px solid #444;border-radius:8px;padding:16px;margin-bottom:20px;">';
+      html += '<h3 style="margin-top:0;color:#f6eec2;border-bottom:2px solid #25d366;padding-bottom:12px;">📂 Product Distribution by Category</h3>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;">';
+      Object.entries(categoryCount).forEach(([cat, count]) => {
+        html += '<div style="background:#111;border:2px solid #667eea;border-radius:8px;padding:12px;text-align:center;">';
+        html += '<div style="color:#f6eec2;font-weight:bold;margin-bottom:6px;">' + (cat || 'Uncategorized') + '</div>';
+        html += '<div style="font-size:24px;color:#667eea;font-weight:bold;">' + count + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '</div>';
+      
+      // Export Reports Section
+      html += '<div style="background:linear-gradient(135deg,rgba(37,211,102,0.1),rgba(37,211,102,0.05));border:2px solid #25d366;border-radius:8px;padding:16px;">';
+      html += '<h3 style="margin-top:0;color:#f6eec2;border-bottom:2px solid #25d366;padding-bottom:12px;">📥 Export Reports</h3>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">';
+      html += '<button id="exportSalesReport" style="padding:12px;background:linear-gradient(135deg,#25d366,#20b854);color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">📊 Sales Report (CSV)</button>';
+      html += '<button id="exportProductReport" style="padding:12px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">📦 Product Report (CSV)</button>';
+      html += '<button id="exportInventoryReport" style="padding:12px;background:linear-gradient(135deg,#ff9800,#f57c00);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">📈 Inventory Report (CSV)</button>';
+      html += '<button id="exportAllData" style="padding:12px;background:linear-gradient(135deg,#2196f3,#1976d2);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">💾 Full Export (JSON)</button>';
+      html += '</div>';
+      html += '<p style="color:#999;font-size:11px;margin-top:12px;">Download comprehensive reports for analysis, backup, or sharing with management.</p>';
+      html += '</div>';
+      
       html += '</div>';
 
       // BRANDS TAB
@@ -1784,6 +1999,95 @@
       html += '</div>';
       html += '</div>';
 
+      // USERS/STAFF MANAGEMENT TAB
+      html += '<div id="usersTabContent" style="display:none;">';
+      html += '<div style="background:#222;padding:16px;border-radius:8px;margin-bottom:20px;border:1px solid #444;">';
+      html += '<h3 style="margin-top:0;color:#f6eec2;">👥 Add New Staff Member</h3>';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">';
+      html += '<input type="text" id="staffName" placeholder="Full Name" style="padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
+      html += '<input type="email" id="staffEmail" placeholder="Email Address" style="padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
+      html += '<input type="tel" id="staffPhone" placeholder="Phone Number" style="padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
+      html += '<select id="staffRole" style="padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;"><option value="">Select Role</option><option value="manager">Manager</option><option value="cashier">Cashier</option><option value="inventory">Inventory Staff</option><option value="delivery">Delivery</option></select>';
+      html += '</div>';
+      html += '<div style="margin-bottom:12px;">';
+      html += '<input type="password" id="staffPassword" placeholder="Set Password" style="width:100%;padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;">';
+      html += '</div>';
+      html += '<button id="addStaffBtn" style="width:100%;padding:10px;background:#25d366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">+ Add Staff Member</button>';
+      html += '</div>';
+
+      // Staff List
+      html += '<div style="margin-top:20px;">';
+      html += '<h3 style="color:#f6eec2;border-bottom:2px solid #25d366;padding-bottom:12px;">👥 Current Staff</h3>';
+      html += '<div id="staffMembersList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">';
+      
+      let staffMembers = JSON.parse(localStorage.getItem('staffMembers') || '[]');
+      if (staffMembers.length === 0) {
+        html += '<div style="padding:20px;text-align:center;color:#999;grid-column:1/-1;">No staff members added yet</div>';
+      } else {
+        staffMembers.forEach((staff, idx) => {
+          html += '<div style="background:#111;border:2px solid #667eea;border-radius:8px;padding:12px;">';
+          html += '<div style="color:#f6eec2;font-weight:bold;margin-bottom:8px;">' + staff.name + '</div>';
+          html += '<div style="color:#999;font-size:11px;margin-bottom:4px;">📧 ' + staff.email + '</div>';
+          html += '<div style="color:#999;font-size:11px;margin-bottom:4px;">📞 ' + staff.phone + '</div>';
+          html += '<div style="background:#25d366;color:#000;padding:4px 8px;border-radius:4px;display:inline-block;font-weight:bold;font-size:10px;margin-bottom:8px;">' + staff.role + '</div>';
+          html += '<div style="display:flex;gap:6px;">';
+          html += '<button class="editStaffBtn" data-idx="' + idx + '" style="flex:1;padding:6px;background:#667eea;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:11px;">✏️ Edit</button>';
+          html += '<button class="deleteStaffBtn" data-idx="' + idx + '" style="flex:1;padding:6px;background:#ff6b6b;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:11px;">🗑️ Delete</button>';
+          html += '</div>';
+          html += '</div>';
+        });
+      }
+      html += '</div>';
+      html += '</div>';
+      html += '</div>';
+
+      // ALERTS TAB - NOTIFICATIONS & MONITORING
+      html += '<div id="alertsTabContent" style="display:none;">';
+      html += '<div style="background:#222;padding:16px;border-radius:8px;margin-bottom:20px;border:1px solid #444;">';
+      html += '<h3 style="margin-top:0;color:#f6eec2;">🔔 Alert Settings</h3>';
+      html += '<div style="display:flex;flex-direction:column;gap:12px;">';
+      html += '<label style="display:flex;align-items:center;gap:12px;cursor:pointer;">';
+      html += '<input type="checkbox" id="lowStockAlert" checked style="width:18px;height:18px;cursor:pointer;">';
+      html += '<span style="color:#f6eec2;flex:1;">🎯 Enable Low Stock Alerts</span>';
+      html += '</label>';
+      html += '<label style="display:flex;align-items:center;gap:12px;cursor:pointer;">';
+      html += '<input type="checkbox" id="orderAlert" checked style="width:18px;height:18px;cursor:pointer;">';
+      html += '<span style="color:#f6eec2;flex:1;">📦 Enable New Order Notifications</span>';
+      html += '</label>';
+      html += '<label style="display:flex;align-items:center;gap:12px;cursor:pointer;">';
+      html += '<input type="checkbox" id="bnplAlert" checked style="width:18px;height:18px;cursor:pointer;">';
+      html += '<span style="color:#f6eec2;flex:1;">💳 Enable BNPL Application Alerts</span>';
+      html += '</label>';
+      html += '<label style="display:flex;align-items:center;gap:12px;cursor:pointer;">';
+      html += '<input type="checkbox" id="dailySummary" checked style="width:18px;height:18px;cursor:pointer;">';
+      html += '<span style="color:#f6eec2;flex:1;">📊 Daily Summary Report</span>';
+      html += '</label>';
+      html += '</div>';
+      html += '<button id="saveAlertSettings" style="width:100%;padding:10px;background:#25d366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;margin-top:12px;">Save Alert Settings</button>';
+      html += '</div>';
+
+      // Active Alerts
+      html += '<div style="margin-top:20px;">';
+      html += '<h3 style="color:#f6eec2;margin-top:0;border-bottom:2px solid #ff6b6b;padding-bottom:12px;">⚠️ Active Alerts</h3>';
+      html += '<div style="display:flex;flex-direction:column;gap:12px;">';
+      
+      // Low stock alerts
+      let lowStockProducts = adminProducts.filter(p => p.stock < 10);
+      if (lowStockProducts.length > 0) {
+        lowStockProducts.forEach(prod => {
+          html += '<div style="background:linear-gradient(135deg,rgba(255,152,0,0.1),rgba(255,107,107,0.1));border-left:4px solid #ff9800;border-radius:8px;padding:12px;">';
+          html += '<div style="color:#f6eec2;font-weight:bold;margin-bottom:4px;">⚠️ Low Stock Alert</div>';
+          html += '<div style="color:#ddd;font-size:13px;">' + prod.name + ' has only <strong style="color:#ff9800;">' + prod.stock + '</strong> units left</div>';
+          html += '</div>';
+        });
+      } else {
+        html += '<div style="background:linear-gradient(135deg,rgba(37,211,102,0.1),rgba(37,211,102,0.05));border-left:4px solid #25d366;border-radius:8px;padding:12px;text-align:center;color:#25d366;font-weight:bold;">✅ All stock levels normal</div>';
+      }
+      
+      html += '</div>';
+      html += '</div>';
+      html += '</div>';
+
       // HISTORY TAB
       html += '<div id="historyTabContent" style="display:none;">';
       html += '<div style="display:flex;gap:12px;margin-bottom:20px;">';
@@ -1793,7 +2097,6 @@
       html += '</div>';
       
       html += '<div id="ordersHistory" style="display:block;max-height:600px;overflow-y:auto;border:1px solid #444;border-radius:6px;">';
-      let orderHistory = JSON.parse(localStorage.getItem('orderHistory')) || [];
       if (orderHistory.length === 0) {
         html += '<div style="padding:20px;text-align:center;color:#999;">No orders yet</div>';
       } else {
@@ -1825,7 +2128,6 @@
       html += '</div>';
       
       html += '<div id="bnplHistory" style="display:none;max-height:600px;overflow-y:auto;border:1px solid #444;border-radius:6px;">';
-      let bnplHistory = JSON.parse(localStorage.getItem('bnplHistory')) || [];
       if (bnplHistory.length === 0) {
         html += '<div style="padding:20px;text-align:center;color:#999;">No BNPL applications yet</div>';
       } else {
@@ -1974,49 +2276,99 @@
       window.adminPanelEscapeHandler = escapeHandler;
       document.addEventListener('keydown', escapeHandler);
 
+      // Advanced Tab switching function
+      const switchTab = (tabName) => {
+        const tabs = ['dashboardTabContent', 'productsTabContent', 'inventoryTabContent', 'analyticsTabContent', 'brandsTabContent', 'usersTabContent', 'alertsTabContent', 'historyTabContent', 'settingsTabContent'];
+        const tabButtons = ['dashboardTab', 'productsTab', 'inventoryTab', 'analyticsTab', 'brandsTab', 'usersTab', 'alertsTab', 'historyTab', 'settingsTab'];
+        
+        tabs.forEach(tab => {
+          const elem = document.getElementById(tab);
+          if (elem) elem.style.display = 'none';
+        });
+        tabButtons.forEach(btn => {
+          const elem = document.getElementById(btn);
+          if (elem) elem.style.background = '#444';
+        });
+        
+        const tabContent = document.getElementById(tabName + 'TabContent');
+        const tabBtn = document.getElementById(tabName + 'Tab');
+        if (tabContent) tabContent.style.display = 'block';
+        if (tabBtn) tabBtn.style.background = '#25d366';
+      };
+
       // Tab switching
-      document.getElementById('productsTab').addEventListener('click', () => {
-        document.getElementById('productsTabContent').style.display = 'block';
-        document.getElementById('brandsTabContent').style.display = 'none';
-        document.getElementById('historyTabContent').style.display = 'none';
-        document.getElementById('settingsTabContent').style.display = 'none';
-        document.getElementById('productsTab').style.background = '#25d366';
-        document.getElementById('brandsTab').style.background = '#444';
-        document.getElementById('historyTab').style.background = '#444';
-        document.getElementById('settingsTab').style.background = '#444';
+      ['dashboard', 'products', 'inventory', 'analytics', 'brands', 'users', 'alerts', 'history', 'settings'].forEach(tabName => {
+        const btn = document.getElementById(tabName + 'Tab');
+        if (btn) {
+          btn.addEventListener('click', () => switchTab(tabName));
+        }
       });
 
-      document.getElementById('brandsTab').addEventListener('click', () => {
-        document.getElementById('productsTabContent').style.display = 'none';
-        document.getElementById('brandsTabContent').style.display = 'block';
-        document.getElementById('historyTabContent').style.display = 'none';
-        document.getElementById('settingsTabContent').style.display = 'none';
-        document.getElementById('productsTab').style.background = '#444';
-        document.getElementById('brandsTab').style.background = '#25d366';
-        document.getElementById('historyTab').style.background = '#444';
-        document.getElementById('settingsTab').style.background = '#444';
+      console.log('✅ Admin panel loaded successfully');
+
+      // Stock update handlers
+      document.querySelectorAll('.updateStockBtn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const idx = this.getAttribute('data-idx');
+          const input = document.querySelector('.stockInput[data-idx="' + idx + '"]');
+          if (input) {
+            const adminProds = JSON.parse(localStorage.getItem('adminProducts') || '[]');
+            if (adminProds[idx]) {
+              adminProds[idx].stock = parseInt(input.value) || 0;
+              localStorage.setItem('adminProducts', JSON.stringify(adminProds));
+              alert('✅ Stock updated for ' + adminProds[idx].name);
+            }
+          }
+        });
       });
 
-      document.getElementById('historyTab').addEventListener('click', () => {
-        document.getElementById('productsTabContent').style.display = 'none';
-        document.getElementById('brandsTabContent').style.display = 'none';
-        document.getElementById('historyTabContent').style.display = 'block';
-        document.getElementById('settingsTabContent').style.display = 'none';
-        document.getElementById('productsTab').style.background = '#444';
-        document.getElementById('brandsTab').style.background = '#444';
-        document.getElementById('historyTab').style.background = '#25d366';
-        document.getElementById('settingsTab').style.background = '#444';
+      // Staff member handlers
+      document.getElementById('addStaffBtn').addEventListener('click', function() {
+        const name = document.getElementById('staffName').value;
+        const email = document.getElementById('staffEmail').value;
+        const phone = document.getElementById('staffPhone').value;
+        const role = document.getElementById('staffRole').value;
+        const password = document.getElementById('staffPassword').value;
+        
+        if (!name || !email || !phone || !role || !password) {
+          alert('❌ Please fill all fields');
+          return;
+        }
+        
+        const staffMembers = JSON.parse(localStorage.getItem('staffMembers') || '[]');
+        staffMembers.push({ name, email, phone, role, password });
+        localStorage.setItem('staffMembers', JSON.stringify(staffMembers));
+        
+        alert('✅ Staff member added: ' + name);
+        document.getElementById('staffName').value = '';
+        document.getElementById('staffEmail').value = '';
+        document.getElementById('staffPhone').value = '';
+        document.getElementById('staffRole').value = '';
+        document.getElementById('staffPassword').value = '';
       });
 
-      document.getElementById('settingsTab').addEventListener('click', () => {
-        document.getElementById('productsTabContent').style.display = 'none';
-        document.getElementById('brandsTabContent').style.display = 'none';
-        document.getElementById('historyTabContent').style.display = 'none';
-        document.getElementById('settingsTabContent').style.display = 'block';
-        document.getElementById('productsTab').style.background = '#444';
-        document.getElementById('brandsTab').style.background = '#444';
-        document.getElementById('historyTab').style.background = '#444';
-        document.getElementById('settingsTab').style.background = '#25d366';
+      // Delete staff handler
+      document.querySelectorAll('.deleteStaffBtn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const idx = this.getAttribute('data-idx');
+          const staffMembers = JSON.parse(localStorage.getItem('staffMembers') || '[]');
+          const removed = staffMembers.splice(idx, 1);
+          localStorage.setItem('staffMembers', JSON.stringify(staffMembers));
+          alert('✅ Removed: ' + removed[0].name);
+          openAdminPanel();
+        });
+      });
+
+      // Alert settings
+      document.getElementById('saveAlertSettings').addEventListener('click', function() {
+        const settings = {
+          lowStockAlert: document.getElementById('lowStockAlert').checked,
+          orderAlert: document.getElementById('orderAlert').checked,
+          bnplAlert: document.getElementById('bnplAlert').checked,
+          dailySummary: document.getElementById('dailySummary').checked
+        };
+        localStorage.setItem('alertSettings', JSON.stringify(settings));
+        alert('✅ Alert settings saved');
       });
 
       // Change password button
@@ -2555,6 +2907,89 @@
             openAdminPanel();
           }
         });
+      });
+
+      // Export Report Handlers
+      document.getElementById('exportSalesReport').addEventListener('click', () => {
+        const orderHistory = JSON.parse(localStorage.getItem('orderHistory') || '[]');
+        let csv = 'Date,Time,Customer,Phone,City,Order Items,Delivery Day/Month\n';
+        orderHistory.forEach(order => {
+          const date = new Date(order.timestamp).toLocaleDateString();
+          const time = new Date(order.timestamp).toLocaleTimeString();
+          csv += '"' + date + '","' + time + '","' + order.name + '","' + order.phone + '","' + order.city + '","' + order.order.replace(/"/g, '""') + '","' + order.day + '/' + order.month + '"\n';
+        });
+        const blob = new Blob([csv], {type: 'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'sales-report-' + new Date().toISOString().split('T')[0] + '.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        alert('✅ Sales report exported');
+      });
+
+      document.getElementById('exportProductReport').addEventListener('click', () => {
+        const adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
+        let csv = 'Product Name,Category,Brand,Price (LKR),Stock,Status\n';
+        adminProducts.forEach(prod => {
+          const status = prod.stock > 20 ? 'Good' : prod.stock > 10 ? 'Low' : 'Critical';
+          csv += '"' + prod.name + '","' + (prod.category || 'N/A') + '","' + (prod.brand || 'N/A') + '",' + prod.price + ',' + prod.stock + ',"' + status + '"\n';
+        });
+        const blob = new Blob([csv], {type: 'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'product-report-' + new Date().toISOString().split('T')[0] + '.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        alert('✅ Product report exported');
+      });
+
+      document.getElementById('exportInventoryReport').addEventListener('click', () => {
+        const adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
+        let csv = 'Product,Current Stock,Status,Reorder Needed\n';
+        adminProducts.forEach(prod => {
+          const status = prod.stock > 20 ? '✅ Adequate' : prod.stock > 10 ? '⚠️ Low' : '🔴 Critical';
+          const reorder = prod.stock < 10 ? 'YES' : 'NO';
+          csv += '"' + prod.name + '",' + prod.stock + ',"' + status + '","' + reorder + '"\n';
+        });
+        const blob = new Blob([csv], {type: 'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'inventory-report-' + new Date().toISOString().split('T')[0] + '.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        alert('✅ Inventory report exported');
+      });
+
+      document.getElementById('exportAllData').addEventListener('click', () => {
+        const fullData = {
+          exportDate: new Date().toISOString(),
+          adminProducts: JSON.parse(localStorage.getItem('adminProducts') || '[]'),
+          adminBrands: JSON.parse(localStorage.getItem('adminBrands') || '[]'),
+          orderHistory: JSON.parse(localStorage.getItem('orderHistory') || '[]'),
+          bnplHistory: JSON.parse(localStorage.getItem('bnplHistory') || '[]'),
+          staffMembers: JSON.parse(localStorage.getItem('staffMembers') || '[]'),
+          alertSettings: JSON.parse(localStorage.getItem('alertSettings') || '{}')
+        };
+        const json = JSON.stringify(fullData, null, 2);
+        const blob = new Blob([json], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'anuththara-complete-export-' + new Date().toISOString().split('T')[0] + '.json';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        alert('✅ Complete data export finished');
       });
 
       // History tab filters
