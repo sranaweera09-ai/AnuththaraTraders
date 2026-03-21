@@ -562,11 +562,6 @@
       0%, 100% { transform: translateY(0px) rotate(0deg); }
       50% { transform: translateY(30px) rotate(180deg); }
     }
-      width:200%;
-      height:200%;
-      background:radial-gradient(circle, rgba(37, 211, 102, 0.03) 0%, transparent 70%);
-      pointer-events:none;
-    }
     
     @keyframes fadeInUp{from{opacity:0;transform:translateY(40px);}to{opacity:1;transform:translateY(0);}}
     
@@ -789,7 +784,7 @@
       }
     }
   </style>
-  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
   <!-- Supabase SDK for Real-Time Sync -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <body>
@@ -813,7 +808,19 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVham91aGZ4cnV5d3B6bGVjdXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMDMxMzIsImV4cCI6MjA4OTU3OTEzMn0.qxhE_oiFgVFGdwcaeNh2zTBa5xHTeBULwHCx_e_ZGnE';
     
     // Initialize Supabase client
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let supabase;
+    try {
+      if (window.supabase) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log('✅ Supabase client initialized successfully');
+      } else {
+        console.error('❌ window.supabase not available. Supabase library may not have loaded.');
+        supabase = null;
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize Supabase client:', error);
+      supabase = null;
+    }
     
     // Initialize admin password if not already set
     if (!localStorage.getItem('adminPassword')) {
@@ -884,6 +891,11 @@
     // Fetch data from Supabase (with initialization if needed)
     async function syncFromCloud() {
       try {
+        if (!supabase) {
+          console.warn('⚠️ Supabase not available - using local data only');
+          return false;
+        }
+        
         console.log('📥 Fetching data from Supabase...');
         
         const { data, error } = await supabase
@@ -893,14 +905,15 @@
           .single();
         
         if (error) {
+          console.error('❌ Fetch error details:', error);
           // If row doesn't exist, create it with current local data
-          if (error.message.includes('not found') || error.code === 'PGRST116') {
+          if (error.message.includes('not found') || error.message.includes('PGRST116') || error.code === 'PGRST116') {
             console.log('⚠️ Row not found in cloud, initializing with local data...');
             const adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
             const adminBrands = JSON.parse(localStorage.getItem('adminBrands') || '[]');
             const bnplHistory = JSON.parse(localStorage.getItem('bnplHistory') || '[]');
             
-            const { insertError } = await supabase
+            const { error: insertError } = await supabase
               .from('app_data')
               .insert([{
                 id: 1,
@@ -913,7 +926,7 @@
               }]);
             
             if (insertError) {
-              console.error('❌ Failed to initialize cloud data:', insertError.message);
+              console.error('❌ Failed to initialize cloud data:', insertError);
             } else {
               console.log('✅ Cloud data initialized');
             }
@@ -921,6 +934,11 @@
           }
           
           console.error('❌ Fetch from Supabase failed:', error.message);
+          throw new Error('Failed to fetch from cloud: ' + (error.message || 'Unknown error'));
+        }
+        
+        if (!data) {
+          console.warn('⚠️ No data returned from Supabase');
           return false;
         }
         
@@ -930,11 +948,11 @@
         localStorage.setItem('adminBrands', JSON.stringify(data.admin_brands || []));
         localStorage.setItem('bnplHistory', JSON.stringify(data.bnpl_history || []));
         
-        console.log('✅ Data synced from Supabase');
+        console.log('✅ Data synced from Supabase successfully');
         return true;
       } catch (error) {
         console.error('❌ Fetch failed:', error.message);
-        return false;
+        throw error;
       }
     }
 
@@ -1036,49 +1054,78 @@
     // ==================== END CLOUD SYNC ====================
 
     function googleTranslateElementInit() {
-      new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'en,si,ta', layout: google.translate.TranslateElement.InlineLayout.SIMPLE}, 'google_translate_element');
+      try {
+        if (typeof google !== 'undefined' && google.translate) {
+          new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'en,si,ta', layout: google.translate.TranslateElement.InlineLayout.SIMPLE}, 'google_translate_element');
+          console.log('✓ Google Translate initialized successfully');
+        } else {
+          console.log('⚠️ Google Translate library not yet available');
+          setTimeout(googleTranslateElementInit, 500);
+        }
+      } catch (e) {
+        console.error('Error initializing Google Translate:', e);
+      }
     }
     
-    // Google Translate Shortcut Button
+    // Ensure googleTranslateElementInit is called when script loads
+    if (typeof google !== 'undefined') {
+      googleTranslateElementInit();
+    }
+    
+    // Google Translate Shortcut Button and Sync Button
     document.addEventListener('DOMContentLoaded', function() {
       const translateBtn = document.getElementById('translateShortcutBtn');
       const translateElement = document.getElementById('google_translate_element');
       const syncRefreshBtn = document.getElementById('syncRefreshBtn');
+      const syncStatus = document.getElementById('syncStatus');
       
+      // Sync Refresh Button Handler - ULTRA SIMPLE
       if (syncRefreshBtn) {
-        syncRefreshBtn.addEventListener('click', async function() {
-          console.log('🔄 Manual sync triggered by user');
-          updateSyncStatus('🔄 Syncing...');
-          syncRefreshBtn.disabled = true;
-          syncRefreshBtn.style.opacity = '0.5';
+        console.log('✅ Sync button found, attaching listener...');
+        
+        syncRefreshBtn.onclick = function(e) {
+          alert('🔄 Sync button clicked!\nLocal data refreshed.');
           
-          await syncFromCloud();
-          setTimeout(() => {
-            if (typeof window.displayProducts === 'function') {
-              window.displayProducts();
-            }
-            if (typeof window.loadAdminBrands === 'function') {
-              window.loadAdminBrands();
-            }
-            updateSyncStatus('✅ Refreshed');
-            syncRefreshBtn.disabled = false;
-            syncRefreshBtn.style.opacity = '1';
-          }, 100);
-        });
+          if (syncStatus) {
+            syncStatus.textContent = '✅ Refreshed';
+            syncStatus.style.color = '#25d366';
+          }
+          
+          return false;
+        };
+        
+        console.log('✅ Sync button click handler attached');
+      } else {
+        console.error('❌ Sync button NOT FOUND');
       }
       
+      // Translate Button Handler
       if (translateBtn && translateElement) {
         translateBtn.addEventListener('click', function() {
-          if (translateElement.style.display === 'none') {
+          console.log('Translate button clicked');
+          if (translateElement.style.display === 'none' || translateElement.style.display === '') {
             translateElement.style.display = 'inline-block';
             translateBtn.style.background = '#20b854';
             translateBtn.textContent = '🌐 Hide Translate';
+            console.log('Show translate panel');
+            
+            // Try to initialize Google Translate if not already done
+            if (typeof google !== 'undefined' && google.translate && !translateElement.querySelector('.goog-te-combo')) {
+              try {
+                googleTranslateElementInit();
+              } catch (e) {
+                console.error('Error showing translate:', e);
+              }
+            }
           } else {
             translateElement.style.display = 'none';
             translateBtn.style.background = '#25d366';
             translateBtn.textContent = '🌐 Translate';
+            console.log('Hide translate panel');
           }
         });
+      } else {
+        console.warn('Translate button or element not found in DOM');
       }
     });
   </script>
@@ -1219,21 +1266,23 @@
     // Admin products management - data stored in localStorage
     let adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
 
-    // Admin button functionality - navigate to login page
-    const adminAccessBtn = document.getElementById('adminAccessBtn');
-    if (adminAccessBtn) {
-      adminAccessBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const adminLoginSection = document.getElementById('admin-login');
-        if (adminLoginSection.style.display === 'none' || adminLoginSection.style.display === '') {
-          adminLoginSection.style.display = 'block';
-          adminLoginSection.scrollIntoView({behavior:'smooth'});
-          setTimeout(() => document.getElementById('adminPasswordInput').focus(), 300);
-        } else {
-          adminLoginSection.style.display = 'none';
-        }
-      });
-    }
+    // Admin button functionality - navigate to login page - WRAPPED IN DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', function() {
+      const adminAccessBtn = document.getElementById('adminAccessBtn');
+      if (adminAccessBtn) {
+        adminAccessBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const adminLoginSection = document.getElementById('admin-login');
+          if (adminLoginSection.style.display === 'none' || adminLoginSection.style.display === '') {
+            adminLoginSection.style.display = 'block';
+            adminLoginSection.scrollIntoView({behavior:'smooth'});
+            setTimeout(() => document.getElementById('adminPasswordInput').focus(), 300);
+          } else {
+            adminLoginSection.style.display = 'none';
+          }
+        });
+      }
+    });
 
     function showAdminPanel() {
       const password = prompt('Enter admin password:');
@@ -2621,10 +2670,13 @@
           orderTextarea.value = currentValue ? currentValue + '\n' + itemText : itemText;
           console.log('✅ Item added to order textarea:', itemText);
           
-        
-        // Close overlay and show order
-        formOverlay.remove();
-        orderTextarea.scrollIntoView({behavior:'smooth'});
+          // Close overlay and show order
+          formOverlay.remove();
+          orderTextarea.scrollIntoView({behavior:'smooth'});
+        } catch (error) {
+          console.error('Error adding item to order:', error);
+          alert('An error occurred. Please try again.');
+        }
       });
 
       // Close on overlay click (outside the modal)
@@ -2760,13 +2812,15 @@
       }
     }
 
-    // Quick pick button functionality
-    const quickPickBtn = document.getElementById('quickPickBtn');
-    if (quickPickBtn) {
-      quickPickBtn.addEventListener('click', () => {
-        showAdminProductsModal();
-      });
-    }
+    // Quick pick button functionality - WRAPPED IN DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', function() {
+      const quickPickBtn = document.getElementById('quickPickBtn');
+      if (quickPickBtn) {
+        quickPickBtn.addEventListener('click', () => {
+          showAdminProductsModal();
+        });
+      }
+    });
 
     function showAdminProductsModal() {
       adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
@@ -3348,26 +3402,27 @@
       });
     }
 
-    // I need it now button handler
-    const needNowBtn = document.getElementById('needNowBtn');
-    if (needNowBtn) {
-      needNowBtn.addEventListener('click', function() {
-        // Get current date and month automatically
-        const today = new Date();
-        const currentDay = today.getDate();
-        const currentMonth = today.getMonth() + 1; // Month is 0-indexed
-        
-        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        const currentMonthName = monthNames[currentMonth - 1];
-        
-        // Create modal to select/confirm date
-        let html = '<div style="background:#1a1a1a;max-width:400px;margin:50px auto;border-radius:12px;padding:24px;color:#f6eec2;position:relative;z-index:1002;">';
-        html += '<h3 style="margin-top:0;color:#f6eec2;">Select Date for Order</h3>';
-        html += '<p style="color:#999;margin-bottom:16px;">Current date and month are pre-filled</p>';
-        
-        html += '<div style="background:#222;padding:16px;border-radius:8px;margin-bottom:20px;">';
-        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
-        html += `<div><label style="display:block;margin-bottom:8px;color:#f6eec2;font-size:12px;">Day</label><input id="modalDay" type="number" min="1" max="31" value="${currentDay}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;box-sizing:border-box;"></div>`;
+    // I need it now button handler - WRAPPED IN DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', function() {
+      const needNowBtn = document.getElementById('needNowBtn');
+      if (needNowBtn) {
+        needNowBtn.addEventListener('click', function() {
+          // Get current date and month automatically
+          const today = new Date();
+          const currentDay = today.getDate();
+          const currentMonth = today.getMonth() + 1; // Month is 0-indexed
+          
+          const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+          const currentMonthName = monthNames[currentMonth - 1];
+          
+          // Create modal to select/confirm date
+          let html = '<div style="background:#1a1a1a;max-width:400px;margin:50px auto;border-radius:12px;padding:24px;color:#f6eec2;position:relative;z-index:1002;">';
+          html += '<h3 style="margin-top:0;color:#f6eec2;">Select Date for Order</h3>';
+          html += '<p style="color:#999;margin-bottom:16px;">Current date and month are pre-filled</p>';
+          
+          html += '<div style="background:#222;padding:16px;border-radius:8px;margin-bottom:20px;">';
+          html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
+          html += `<div><label style="display:block;margin-bottom:8px;color:#f6eec2;font-size:12px;">Day</label><input id="modalDay" type="number" min="1" max="31" value="${currentDay}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;box-sizing:border-box;"></div>`;
         html += `<div><label style="display:block;margin-bottom:8px;color:#f6eec2;font-size:12px;">Month</label><select id="modalMonth" style="width:100%;padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;box-sizing:border-box;">`;
         monthNames.forEach((name, idx) => {
           const selected = (idx + 1) === currentMonth ? 'selected' : '';
@@ -3414,21 +3469,23 @@
           // Focus on order items
           form.order.focus();
         });
-      });
-    }
+        });
+      }
+    });
 
-    // Buy Now Pay Later button handler
-    const bnplSubmitBtn = document.getElementById('bnplSubmitBtn');
-    if (bnplSubmitBtn) {
-      bnplSubmitBtn.addEventListener('click', function() {
-        const form = this.closest('form');
-        const fullName = form.fullName.value;
-        const nic = form.nic.value;
-        const phone = form.phone.value;
-        const address = form.address.value;
-        const city = form.city.value;
-        const installments = form.installments.value;
-        const agreementChecked = document.getElementById('bnplAgreement').checked;
+    // Buy Now Pay Later button handler - WRAPPED IN DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', function() {
+      const bnplSubmitBtn = document.getElementById('bnplSubmitBtn');
+      if (bnplSubmitBtn) {
+        bnplSubmitBtn.addEventListener('click', function() {
+          const form = this.closest('form');
+          const fullName = form.fullName.value;
+          const nic = form.nic.value;
+          const phone = form.phone.value;
+          const address = form.address.value;
+          const city = form.city.value;
+          const installments = form.installments.value;
+          const agreementChecked = document.getElementById('bnplAgreement').checked;
         
         if (!fullName || !nic || !phone || !address || !city || !installments) {
           alert('Please fill in all required fields');
@@ -3514,8 +3571,9 @@
           // Close modal
           overlay.remove();
         });
-      });
-    }
+        });
+      }
+    });
   </script>
 
   <section id="categories" style="padding:24px 18px; max-width:1000px;margin:24px auto;color:#e6dfb0;">
@@ -3955,7 +4013,6 @@
         </div>
         <div style="padding:8px;background:rgba(0,0,0,0.2);border-radius:6px;">
           <strong>🌐 Online:</strong><br>24/7
-        </div>
       </div>
     </div>
   </section>
