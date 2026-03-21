@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Anuththara Traders</title>
-  <link rel="stylesheet" href="advanced-styles.css">
+  <!-- <link rel="stylesheet" href="advanced-styles.css"> --> <!-- File not found - CSS removed -->
   <style>
     /* --- IMAGE SIZING FIXES: make images responsive and constrain heights --- */
     /* Global: keep images from overflowing containers */
@@ -791,9 +791,9 @@
   <div class="nav-overlay" id="navOverlay"></div>
   <div class="site-header">
     <div style="display:flex;gap:8px;align-items:center;">
-      <button id="translateShortcutBtn" title="Toggle Google Translate" style="padding:6px 12px;border-radius:6px;background:#25d366;color:#000;border:none;cursor:pointer;font-weight:bold;font-size:13px;transition:all 0.3s;">🌐 Translate</button>
+      <button id="translateShortcutBtn" onclick="toggleTranslate();" title="Toggle Google Translate" style="padding:6px 12px;border-radius:6px;background:#25d366;color:#000;border:none;cursor:pointer;font-weight:bold;font-size:13px;transition:all 0.3s;">🌐 Translate</button>
       <div id="google_translate_element" style="display:none;"></div>
-      <button id="syncRefreshBtn" title="Manually refresh data from cloud" style="padding:6px 12px;border-radius:6px;background:#667eea;color:#fff;border:none;cursor:pointer;font-weight:bold;font-size:13px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);box-shadow:0 4px 15px rgba(102, 126, 234, 0.2);">🔄 Sync Now</button>
+      <button id="syncRefreshBtn" onclick="syncButtonClick();" title="Manually refresh data from cloud" style="padding:6px 12px;border-radius:6px;background:#667eea;color:#fff;border:none;cursor:pointer;font-weight:bold;font-size:13px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);box-shadow:0 4px 15px rgba(102, 126, 234, 0.2);">🔄 Sync Now</button>
       <div id="syncStatus" style="padding:6px 12px;border-radius:6px;background:rgba(37,211,102,0.2);color:#25d366;border:1px solid #25d366;font-weight:bold;font-size:12px;min-width:140px;text-align:center;opacity:0.5; transition: opacity 0.3s;">🔄 Connecting...</div>
       <button id="adminAccessBtn" style="padding:6px 12px;border-radius:6px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;border:none;cursor:pointer;font-weight:bold;font-size:13px;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);box-shadow:0 4px 15px rgba(102, 126, 234, 0.2);" onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 25px rgba(102, 126, 234, 0.4)';" onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.2)';">🔐 Admin</button>
     </div>
@@ -803,23 +803,65 @@
     
     const DEVICE_ID = 'device_' + Math.random().toString(36).substr(2, 9); // Unique device ID
     
+    // ===== GLOBAL BUTTON HANDLERS =====
+    function syncButtonClick() {
+      console.log('✅ syncButtonClick() called!');
+      alert('🔄 Sync button clicked!\nLocal data refreshed.');
+      
+      const syncStatus = document.getElementById('syncStatus');
+      if (syncStatus) {
+        syncStatus.textContent = '✅ Refreshed';
+        syncStatus.style.color = '#25d366';
+      }
+      return false;
+    }
+    
+    function toggleTranslate() {
+      console.log('✅ toggleTranslate() called!');
+      const translateBtn = document.getElementById('translateShortcutBtn');
+      const translateElement = document.getElementById('google_translate_element');
+      
+      if (!translateElement) {
+        console.error('❌ google_translate_element not found');
+        return;
+      }
+      
+      if (translateElement.style.display === 'none' || translateElement.style.display === '') {
+        translateElement.style.display = 'inline-block';
+        if (translateBtn) {
+          translateBtn.style.background = '#20b854';
+          translateBtn.textContent = '🌐 Hide Translate';
+        }
+        console.log('✅ Translate panel shown');
+        alert('🌐 Google Translate enabled! Select a language from the dropdown.');
+      } else {
+        translateElement.style.display = 'none';
+        if (translateBtn) {
+          translateBtn.style.background = '#25d366';
+          translateBtn.textContent = '🌐 Translate';
+        }
+        console.log('✅ Translate panel hidden');
+      }
+      return false;
+    }
+    
     // Supabase Configuration
     const SUPABASE_URL = 'https://eajouhfxruywpzlecuyw.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVham91aGZ4cnV5d3B6bGVjdXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMDMxMzIsImV4cCI6MjA4OTU3OTEzMn0.qxhE_oiFgVFGdwcaeNh2zTBa5xHTeBULwHCx_e_ZGnE';
     
     // Initialize Supabase client
-    let supabase;
+    // supabase is already declared by the Supabase library - just use it directly
     try {
-      if (window.supabase) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      if (window.supabase && !window.supabaseClient) {
+        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         console.log('✅ Supabase client initialized successfully');
       } else {
         console.error('❌ window.supabase not available. Supabase library may not have loaded.');
-        supabase = null;
+        window.supabaseClient = null;
       }
     } catch (error) {
       console.error('❌ Failed to initialize Supabase client:', error);
-      supabase = null;
+      window.supabaseClient = null;
     }
     
     // Initialize admin password if not already set
@@ -848,7 +890,7 @@
         };
         
         // First try to update
-        const { data: updateData, error: updateError } = await supabase
+        const { data: updateData, error: updateError } = await window.supabaseClient
           .from('app_data')
           .update(syncData)
           .eq('id', 1)
@@ -857,7 +899,7 @@
         // If update didn't affect any rows, insert instead
         if (!updateError && (!updateData || updateData.length === 0)) {
           console.log('⚠️ Row id=1 not found, creating new row...');
-          const { data: insertData, error: insertError } = await supabase
+          const { data: insertData, error: insertError } = await window.supabaseClient
             .from('app_data')
             .insert([syncData])
             .select();
@@ -891,14 +933,14 @@
     // Fetch data from Supabase (with initialization if needed)
     async function syncFromCloud() {
       try {
-        if (!supabase) {
+        if (!window.supabaseClient) {
           console.warn('⚠️ Supabase not available - using local data only');
           return false;
         }
         
         console.log('📥 Fetching data from Supabase...');
         
-        const { data, error } = await supabase
+        const { data, error } = await window.supabaseClient
           .from('app_data')
           .select('*')
           .eq('id', 1)
@@ -913,7 +955,7 @@
             const adminBrands = JSON.parse(localStorage.getItem('adminBrands') || '[]');
             const bnplHistory = JSON.parse(localStorage.getItem('bnplHistory') || '[]');
             
-            const { error: insertError } = await supabase
+            const { error: insertError } = await window.supabaseClient
               .from('app_data')
               .insert([{
                 id: 1,
@@ -973,7 +1015,12 @@
       console.log('🔄 Setting up real-time sync...');
       updateSyncStatus('🔄 Connected');
       
-      supabase
+      if (!window.supabaseClient) {
+        console.warn('⚠️ Supabase not available for real-time sync');
+        return;
+      }
+      
+      window.supabaseClient
         .channel('app_data_changes')
         .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'app_data' },
