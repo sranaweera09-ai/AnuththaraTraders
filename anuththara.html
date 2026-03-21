@@ -344,6 +344,9 @@
     }
     
     @keyframes slideInRight{from{transform:translateX(250px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+    @keyframes slideIn{from{transform:translateX(500px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+    @keyframes slideOut{from{transform:translateX(0);opacity:1;}to{transform:translateX(500px);opacity:0;}}
+    
     
     .floating-sidebar:hover{
       box-shadow:0 32px 100px rgba(37, 211, 102, 0.5), inset 0 1px 0 rgba(255,255,255,0.35);
@@ -762,6 +765,30 @@
       animation: slideUpNotif 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
+    /* Quantity change highlight animation */
+    .qty-highlight {
+      animation: qtyFlash 0.6s ease-out !important;
+    }
+
+    @keyframes qtyFlash {
+      0% {
+        background-color: #333;
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+      }
+      50% {
+        background-color: #25d366;
+        color: #000 !important;
+        transform: scale(1.05);
+        box-shadow: 0 0 0 8px rgba(37, 211, 102, 0);
+      }
+      100% {
+        background-color: #222;
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+      }
+    }
+
     @keyframes slideDownNotif {
       from {
         transform: translateX(-50%) translateY(-140px);
@@ -843,6 +870,281 @@
         console.log('✅ Translate panel hidden');
       }
       return false;
+    }
+    
+    // ===== ADD TO ORDER BUTTON HANDLER =====
+    function handleAddToOrder(btn) {
+      console.log('🎯 ADD TO ORDER CLICKED!', btn);
+      try {
+        // Verify button exists
+        if (!btn) {
+          console.error('❌ Button is null');
+          alert('Button error - please try again');
+          return false;
+        }
+        
+        const idx = parseInt(btn.getAttribute('data-idx'), 10);
+        console.log('📦 Product index:', idx);
+        
+        const adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
+        console.log('💾 Products in localStorage:', adminProducts.length);
+        
+        if (adminProducts.length === 0) {
+          alert('❌ No products available. Admin can add products in the management panel.');
+          return false;
+        }
+        
+        if (isNaN(idx) || idx < 0 || idx >= adminProducts.length) {
+          console.error('❌ Invalid product index:', idx);
+          alert('❌ Product not found (invalid index)');
+          return false;
+        }
+        
+        const product = adminProducts[idx];
+        console.log('✅ Found product:', product);
+        
+        if (!product || !product.name) {
+          console.error('❌ Invalid product data:', product);
+          alert('❌ Invalid product data');
+          return false;
+        }
+        
+        // Verify the form function exists
+        if (typeof showProductQuantityFormFromMain !== 'function') {
+          console.error('❌ showProductQuantityFormFromMain function not found!');
+          alert('Error: Form function not available');
+          return false;
+        }
+        
+        console.log('✅ Opening quantity form for:', product.name);
+        showProductQuantityFormFromMain(product, adminProducts);
+      } catch (error) {
+        console.error('❌ Error in handleAddToOrder:', error);
+        alert('Error: ' + error.message);
+      }
+      return false;
+    }
+
+    // Handle Quick Pick button click
+    function handleQuickPick() {
+      console.log('🎯 QUICK PICK CLICKED!');
+      try {
+        console.log('📦 Loading products from localStorage...');
+        const adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
+        console.log('📦 Products count:', adminProducts.length);
+        
+        if (adminProducts.length === 0) {
+          console.warn('⚠️ No products in localStorage');
+          alert('No products available. Admin needs to add products first.');
+          return false;
+        }
+        
+        window.showAdminProductsModal();
+      } catch (error) {
+        console.error('❌ Error in handleQuickPick:', error.message);
+        console.error('Stack:', error.stack);
+        alert('Error: ' + error.message);
+      }
+      return false;
+    }
+
+    // Expose to window scope
+    window.handleQuickPick = handleQuickPick;
+
+    // Update order summary display
+    function updateOrderSummary() {
+      const orderTextarea = document.querySelector('textarea[name="order"]');
+      const summarySection = document.getElementById('orderSummary');
+      const itemsList = document.getElementById('orderItemsList');
+      const itemsCount = document.getElementById('itemsCount');
+      const totalBill = document.getElementById('totalBill');
+      
+      if (!orderTextarea) return;
+      
+      const orderText = orderTextarea.value.trim();
+      if (!orderText) {
+        summarySection.style.display = 'none';
+        return;
+      }
+      
+      // Parse items from textarea
+      const lines = orderText.split('\n').filter(line => line.trim());
+      const items = [];
+      let total = 0;
+      
+      lines.forEach((line, idx) => {
+        const match = line.match(/•\s*(.+?)\s*\(Rs\.(\d+(?:\.\d+)?)\)\s*x(\d+)/);
+        if (match) {
+          const itemName = match[1];
+          const itemPrice = parseFloat(match[2]);
+          const quantity = parseInt(match[3]);
+          const itemTotal = itemPrice * quantity;
+          total += itemTotal;
+          items.push({
+            name: itemName,
+            price: itemPrice,
+            quantity: quantity,
+            total: itemTotal,
+            index: idx
+          });
+        }
+      });
+      
+      // Show summary if there are items
+      if (items.length > 0) {
+        summarySection.style.display = 'block';
+        
+        // Build items list HTML
+        let html = '';
+        items.forEach((item) => {
+          html += `<div style="background:rgba(37, 211, 102, 0.1);border-left:3px solid #25d366;padding:10px;margin-bottom:8px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="flex:1;">
+              <div style="color:#f6eec2;font-weight:bold;font-size:13px;">${item.name}</div>
+              <div style="color:#999;font-size:11px;">Rs.${item.price} × ${item.quantity}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="color:#25d366;font-weight:bold;font-size:14px;">Rs.${item.total}</div>
+              <button type="button" onclick="removeOrderItem(${item.index});" style="background:#ff6b6b;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:10px;margin-top:4px;font-weight:bold;">Remove</button>
+            </div>
+          </div>`;
+        });
+        
+        itemsList.innerHTML = html;
+        itemsCount.textContent = items.length;
+        totalBill.textContent = `Rs.${total}`;
+      } else {
+        summarySection.style.display = 'none';
+      }
+    }
+
+    // Remove order item by line index
+    function removeOrderItem(index) {
+      const orderTextarea = document.querySelector('textarea[name="order"]');
+      if (!orderTextarea) return;
+      
+      const lines = orderTextarea.value.split('\n');
+      lines.splice(index, 1);
+      orderTextarea.value = lines.join('\n').trim();
+      
+      updateOrderSummary();
+    }
+
+    // Clear all order items
+    function clearOrderSummary() {
+      const orderTextarea = document.querySelector('textarea[name="order"]');
+      if (orderTextarea) {
+        orderTextarea.value = '';
+        updateOrderSummary();
+      }
+    }
+
+    // Expose functions to window scope so they can be called from event handlers
+    window.updateOrderSummary = updateOrderSummary;
+    window.clearOrderSummary = clearOrderSummary;
+    window.removeOrderItem = removeOrderItem;
+
+    // Search modal for global product search
+    function openSearchModal() {
+      const adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
+      
+      if (adminProducts.length === 0) {
+        alert('No products available yet.');
+        return;
+      }
+
+      let html = '<div style="background:linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);max-width:600px;margin:30px auto;border-radius:16px;padding:28px;color:#f6eec2;position:relative;z-index:1002;border:2px solid #667eea;box-shadow:0 0 40px rgba(102, 126, 234, 0.3);">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">';
+      html += '<h2 style="margin:0;font-size:28px;">🔍 Search Products</h2>';
+      html += '<button id="closeSearchModal" style="background:transparent;border:none;color:#f6eec2;padding:6px 12px;cursor:pointer;font-size:24px;font-weight:bold;">✕</button>';
+      html += '</div>';
+
+      html += '<div style="margin-bottom:20px;">';
+      html += '<input id="globalSearchInput" type="text" placeholder="Search by product name..." style="width:100%;padding:14px;border-radius:8px;border:2px solid #667eea;background:#111;color:#f6eec2;font-size:15px;box-sizing:border-box;transition:all 0.3s;" onfocus="this.style.boxShadow=\'0 0 20px rgba(102,126,234,0.4)\'" onfocusout="this.style.boxShadow=\'none\'">';
+      html += '</div>';
+
+      html += '<div id="searchResults" style="background:#222;border-radius:10px;border:1px solid #444;max-height:400px;overflow-y:auto;padding:12px;">';
+      html += '<div style="color:#999;text-align:center;padding:20px;">Start typing to search...</div>';
+      html += '</div>';
+
+      html += '</div>';
+
+      // Create modal overlay
+      const modal = document.createElement('div');
+      modal.id = 'searchModalOverlay';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:1001;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
+      modal.innerHTML = html;
+      document.body.appendChild(modal);
+
+      const searchInput = document.getElementById('globalSearchInput');
+      const searchResults = document.getElementById('searchResults');
+      const closeBtn = document.getElementById('closeSearchModal');
+
+      // Function to filter and display search results
+      const performSearch = () => {
+        const query = searchInput.value.toLowerCase().trim();
+        
+        if (!query) {
+          searchResults.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">Start typing to search...</div>';
+          return;
+        }
+
+        const filtered = adminProducts.filter(product =>
+          product.name.toLowerCase().includes(query) ||
+          (product.brand && product.brand.toLowerCase().includes(query)) ||
+          (product.category && product.category.toLowerCase().includes(query))
+        );
+
+        if (filtered.length === 0) {
+          searchResults.innerHTML = '<div style="color:#ff6b6b;text-align:center;padding:20px;">❌ No products found matching your search</div>';
+          return;
+        }
+
+        let resultsHtml = '';
+        filtered.forEach((prod) => {
+          resultsHtml += `<div style="background:#111;padding:12px;border-radius:6px;margin-bottom:8px;border-left:4px solid #667eea;cursor:pointer;transition:all 0.2s;" onclick="selectSearchResult('${prod.name}', ${prod.price}, ${prod.stock});" onmouseover="this.style.background='#1a1a1a';this.style.transform='translateX(4px)';" onmouseout="this.style.background='#111';this.style.transform='translateX(0)';">
+            <div style="display:flex;justify-content:space-between;align-items:start;">
+              <div style="flex:1;">
+                <div style="color:#f6eec2;font-weight:bold;font-size:14px;">${prod.name}</div>
+                <div style="color:#999;font-size:11px;margin-top:4px;">🏷️ ${prod.brand || 'Generic'} | 📦 ${prod.category || 'General'}</div>
+              </div>
+              <div style="text-align:right;margin-left:10px;">
+                <div style="color:#25d366;font-weight:bold;font-size:14px;">Rs.${prod.price}</div>
+                <div style="color:#999;font-size:11px;">Stock: ${prod.stock}</div>
+              </div>
+            </div>
+          </div>`;
+        });
+        searchResults.innerHTML = resultsHtml;
+      };
+
+      // Event listeners
+      searchInput.addEventListener('input', performSearch);
+      searchInput.addEventListener('keyup', performSearch);
+      closeBtn.addEventListener('click', () => modal.remove());
+      
+      // Close modal when clicking outside
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+      });
+
+      // Auto-focus search input
+      searchInput.focus();
+    }
+
+    // Select a product from search results
+    function selectSearchResult(productName, productPrice, productStock) {
+      // Scroll to products section
+      const productsSection = document.getElementById('products');
+      if (productsSection) {
+        productsSection.scrollIntoView({ behavior: 'smooth' });
+      }
+      
+      // Close search modal
+      const modal = document.getElementById('searchModalOverlay');
+      if (modal) modal.remove();
+      
+      // Show success message
+      showSuccessNotification(`✅ Selected: ${productName} (Rs.${productPrice})`);
     }
     
     // Supabase Configuration
@@ -1102,15 +1404,18 @@
 
     function googleTranslateElementInit() {
       try {
-        if (typeof google !== 'undefined' && google.translate) {
-          new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'en,si,ta', layout: google.translate.TranslateElement.InlineLayout.SIMPLE}, 'google_translate_element');
+        if (typeof google !== 'undefined' && google.translate && google.translate.TranslateElement) {
+          // Use safe optional chaining for InlineLayout
+          const layout = google.translate.TranslateElement.InlineLayout?.SIMPLE || 0;
+          new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'en,si,ta', layout: layout}, 'google_translate_element');
           console.log('✓ Google Translate initialized successfully');
         } else {
           console.log('⚠️ Google Translate library not yet available');
-          setTimeout(googleTranslateElementInit, 500);
+          setTimeout(googleTranslateElementInit, 800);
         }
       } catch (e) {
-        console.error('Error initializing Google Translate:', e);
+        console.error('⚠️ Error initializing Google Translate (will retry):', e.message);
+        setTimeout(googleTranslateElementInit, 1000);
       }
     }
     
@@ -1267,8 +1572,28 @@
       <button id="needNowBtn" type="button" style="padding:8px 16px;border-radius:8px;background:#ff6b6b;color:#fff;font-weight:bold;border:none;cursor:pointer;font-size:13px;align-self:flex-start;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);" onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(255, 107, 107, 0.4)';" onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='none';">⏰ I need it now</button>
       <div style="position:relative;">
         <textarea name="order" placeholder="List your items here..." rows="4" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#f6eec2;width:100%;box-sizing:border-box;"></textarea>
-        <button id="quickPickBtn" type="button" style="position:absolute;right:8px;bottom:8px;padding:8px 14px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold;transition:all 0.3s;box-shadow:0 4px 12px rgba(37, 211, 102, 0.2);" onmouseenter="this.style.transform='scale(1.05)';this.style.boxShadow='0 8px 20px rgba(37, 211, 102, 0.4)';" onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='0 4px 12px rgba(37, 211, 102, 0.2)';">📦 Pick Items</button>
+        <button id="quickPickBtn" type="button" onclick="handleQuickPick();" style="position:absolute;right:8px;bottom:8px;padding:8px 14px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold;transition:all 0.3s;box-shadow:0 4px 12px rgba(37, 211, 102, 0.2);" onmouseenter="this.style.transform='scale(1.05)';this.style.boxShadow='0 8px 20px rgba(37, 211, 102, 0.4)';" onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='0 4px 12px rgba(37, 211, 102, 0.2)';">📦 Pick Items</button>
       </div>
+      
+      <!-- Order Summary Section -->
+      <div id="orderSummary" style="background:rgba(37, 211, 102, 0.1);border:2px solid #25d366;border-radius:8px;padding:10px;margin:6px 0;display:none;">
+        <h4 style="margin:0 0 8px 0;color:#25d366;display:flex;align-items:center;gap:6px;font-size:14px;"><span>📋 Order Summary</span></h4>
+        <div id="orderItemsList" style="background:rgba(0,0,0,0.3);border-radius:6px;padding:8px;margin-bottom:8px;max-height:120px;overflow-y:auto;font-size:11px;">
+          <div style="color:#999;font-size:10px;text-align:center;padding:12px;">No items added yet</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-top:8px;border-top:2px solid #25d366;">
+          <div style="background:rgba(37, 211, 102, 0.2);padding:8px;border-radius:6px;">
+            <span style="color:#999;font-size:9px;text-transform:uppercase;display:block;margin-bottom:2px;">Items Count</span>
+            <div id="itemsCount" style="color:#25d366;font-size:16px;font-weight:bold;">0</div>
+          </div>
+          <div style="background:linear-gradient(135deg, #25d366 0%, #20b854 100%);padding:8px;border-radius:6px;">
+            <span style="color:#000;font-size:9px;text-transform:uppercase;opacity:0.8;display:block;margin-bottom:2px;">Total Bill</span>
+            <div id="totalBill" style="color:#000;font-size:16px;font-weight:bold;">Rs.0</div>
+          </div>
+        </div>
+        <button type="button" onclick="clearOrderSummary();" style="width:100%;margin-top:8px;padding:6px;background:#ff6b6b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:11px;">🗑️ Clear Order</button>
+      </div>
+      
       <button type="submit" style="padding:12px 0;border-radius:10px;background:linear-gradient(135deg, #f6eec2 0%, #e0d6a0 100%);color:#222;font-weight:bold;border:none;cursor:pointer;width:100%;transition:all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);font-size:15px;text-transform:uppercase;letter-spacing:1px;box-shadow:0 8px 20px rgba(246, 238, 194, 0.3);position:relative;overflow:hidden;" onmouseenter="this.style.transform='translateY(-3px)';this.style.boxShadow='0 16px 40px rgba(246, 238, 194, 0.5)';" onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 20px rgba(246, 238, 194, 0.3)';">✓ Place Order</button>
     </form>
     <p style="margin-top:10px;color:#e0d6a0;font-size:14px;">We will call you to confirm your order and arrange delivery or pickup.</p>
@@ -2351,35 +2676,31 @@
         const bgColor = colors[colorIdx];
 
         html += `
-          <div class="product-card" data-idx="${idx}" style="cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;">
-            <div style="position:relative;margin-bottom:8px;">
-              ${product.image ? `<img src="${product.image}" alt="${product.name}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;border:1px solid ${bgColor}50;display:block;">` : `<div style="width:100%;height:120px;background:linear-gradient(135deg, ${bgColor}30 0%, ${bgColor}15 100%);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:50px;border:1px solid ${bgColor}50;overflow:hidden;"><div style="text-align:center;"><div style="font-size:48px;">${emoji}</div><div style="font-size:10px;color:#999;margin-top:2px;font-weight:bold;text-transform:uppercase;">Product</div></div></div>`}
-              <div style="position:absolute;top:6px;right:6px;background:${bgColor};color:#fff;padding:4px 10px;border-radius:16px;font-size:11px;font-weight:bold;">
+          <div class="product-card" data-idx="${idx}" style="cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;padding:3px;">
+            <div style="position:relative;margin-bottom:3px;">
+              ${product.image ? `<img src="${product.image}" alt="${product.name}" style="width:100%;height:80px;object-fit:contain;border-radius:4px;border:1px solid ${bgColor}50;display:block;background:linear-gradient(135deg, ${bgColor}15 0%, ${bgColor}05 100%);" loading="lazy">` : `<div style="width:100%;height:80px;background:linear-gradient(135deg, ${bgColor}30 0%, ${bgColor}15 100%);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid ${bgColor}50;overflow:hidden;"><div style="text-align:center;font-size:28px;">${emoji}</div></div>`}
+              <div style="position:absolute;top:1px;right:1px;background:${bgColor};color:#fff;padding:1px 5px;border-radius:8px;font-size:7px;font-weight:bold;">
                 ${product.brand}
               </div>
             </div>
             
-            <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
-              <h4 style="margin:0;color:#f6eec2;font-size:14px;font-weight:bold;">${product.name}</h4>
+            <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+              <h4 style="margin:0;color:#f6eec2;font-size:9px;font-weight:bold;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${product.name}</h4>
               
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;">
-                <div style="background:rgba(37,211,102,0.15);padding:6px;border-radius:6px;border-left:2px solid #25d366;">
-                  <span style="color:#999;display:block;font-size:9px;text-transform:uppercase;font-weight:bold;">Category</span>
-                  <span style="color:#f6eec2;font-weight:bold;font-size:12px;">${emoji} ${product.category ? product.category.charAt(0).toUpperCase() + product.category.slice(1) : 'General'}</span>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;font-size:7px;">
+                <div style="background:rgba(37,211,102,0.15);padding:2px;border-radius:2px;border-left:1px solid #25d366;overflow:hidden;text-overflow:ellipsis;">
+                  <span style="color:#999;display:block;font-size:6px;text-transform:uppercase;font-weight:bold;line-height:1;">Cat</span>
+                  <span style="color:#f6eec2;font-weight:bold;font-size:8px;">${emoji}</span>
                 </div>
-                <div style="background:rgba(102,126,234,0.15);padding:6px;border-radius:6px;border-left:2px solid #667eea;">
-                  <span style="color:#999;display:block;font-size:9px;text-transform:uppercase;font-weight:bold;">Stock</span>
-                  <span style="color:#f6eec2;font-weight:bold;font-size:12px;">📦 ${product.stock}</span>
+                <div style="background:rgba(102,126,234,0.15);padding:2px;border-radius:2px;border-left:1px solid #667eea;overflow:hidden;text-overflow:ellipsis;">
+                  <span style="color:#999;display:block;font-size:6px;text-transform:uppercase;font-weight:bold;line-height:1;">Stock</span>
+                  <span style="color:#f6eec2;font-weight:bold;font-size:8px;">${product.stock}</span>
                 </div>
               </div>
               
-              <div style="background:linear-gradient(135deg, #25d366 0%, #20b854 100%);padding:8px;border-radius:6px;text-align:center;margin-bottom:4px;">
-                <div style="color:#000;font-weight:bold;font-size:16px;">Rs.${product.price}</div>
+              <div style="background:linear-gradient(135deg, #25d366 0%, #20b854 100%);padding:2px;border-radius:3px;text-align:center;margin-bottom:0;">
+                <div style="color:#000;font-weight:bold;font-size:10px;line-height:1;">Rs.${product.price}</div>
               </div>
-
-              <button class="add-to-order-btn" data-idx="${idx}" style="width:100%;padding:8px;background:#25d366;color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;transition:all 0.3s;text-transform:uppercase;letter-spacing:0.5px;box-shadow:0 4px 12px rgba(37,211,102,0.2);" onmouseenter="this.style.transform='scale(1.05)';this.style.boxShadow='0 6px 16px rgba(37,211,102,0.4)';" onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='0 4px 12px rgba(37,211,102,0.2)';">
-                🛒 Add
-              </button>
             </div>
           </div>
         `;
@@ -2387,39 +2708,7 @@
 
       productsGrid.innerHTML = html;
 
-      // Attach click handlers directly to each button
-      document.querySelectorAll('.add-to-order-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          console.log('✅ Add button clicked! data-idx:', btn.getAttribute('data-idx'));
-          
-          try {
-            const idx = parseInt(btn.getAttribute('data-idx'), 10);
-            const adminProducts = JSON.parse(localStorage.getItem('adminProducts') || '[]');
-            
-            if (idx < 0 || idx >= adminProducts.length) {
-              alert('❌ Product not found');
-              return;
-            }
-            
-            const product = adminProducts[idx];
-            if (!product || !product.name) {
-              alert('❌ Invalid product');
-              return;
-            }
-            
-            console.log('Opening form for:', product.name);
-            showProductQuantityFormFromMain(product, adminProducts);
-          } catch (error) {
-            console.error('Error:', error);
-            alert('Error: ' + error.message);
-          }
-        });
-      });
-
-      // Add card hover effects
+      // Hover effects for product cards
       document.querySelectorAll('.product-card').forEach(card => {
         card.addEventListener('mouseenter', () => {
           card.style.transform = 'translateY(-8px)';
@@ -2528,7 +2817,7 @@
                 <div style="color:#000;font-weight:bold;font-size:16px;">Rs.${product.price}</div>
               </div>
 
-              <button class="add-to-order-btn" data-idx="${originalIdx}" style="width:100%;padding:8px;background:#25d366;color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;transition:all 0.3s;text-transform:uppercase;letter-spacing:0.5px;box-shadow:0 4px 12px rgba(37,211,102,0.2);" onmouseenter="this.style.transform='scale(1.05)';this.style.boxShadow='0 6px 16px rgba(37,211,102,0.4)';" onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='0 4px 12px rgba(37,211,102,0.2)';">
+              <button class="add-to-order-btn" data-idx="${originalIdx}" onclick="handleAddToOrder(this);" style="width:100%;padding:8px;background:#25d366;color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;transition:all 0.3s;text-transform:uppercase;letter-spacing:0.5px;box-shadow:0 4px 12px rgba(37,211,102,0.2);" onmouseenter="this.style.transform='scale(1.05)';this.style.boxShadow='0 6px 16px rgba(37,211,102,0.4)';" onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='0 4px 12px rgba(37,211,102,0.2)';">
                 🛒 Add
               </button>
             </div>
@@ -2859,220 +3148,480 @@
       }
     }
 
-    // Quick pick button functionality - WRAPPED IN DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', function() {
-      const quickPickBtn = document.getElementById('quickPickBtn');
-      if (quickPickBtn) {
-        quickPickBtn.addEventListener('click', () => {
-          showAdminProductsModal();
-        });
-      }
-    });
+    // Quantity picker modal for products in Pick Items modal
+    function showQuantityPickerModal(product, parentOverlay) {
+      const catEmoji = {
+        'produce': '🥬',
+        'dairy': '🥛',
+        'bakery': '🍞',
+        'meat': '🍖',
+        'pantry': '🥫',
+        'beverages': '🥤',
+        'snacks': '🍿'
+      };
+      const emoji = catEmoji[product.category] || '📦';
 
-    function showAdminProductsModal() {
-      adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
-      const adminBrands = JSON.parse(localStorage.getItem('adminBrands')) || [];
+      let html = '<div style="background:linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);max-width:450px;margin:auto;border-radius:16px;padding:28px;color:#f6eec2;position:relative;z-index:1002;border:2px solid #25d366;box-shadow:0 0 40px rgba(37, 211, 102, 0.2);">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">';
+      html += `<h2 style="margin:0;font-size:24px;display:flex;align-items:center;gap:8px;flex:1;"><span>${emoji}</span>${product.name}</h2>`;
+      html += '<button id="closeQuantityModal" style="background:transparent;border:none;color:#f6eec2;padding:6px 12px;cursor:pointer;font-size:24px;font-weight:bold;">✕</button>';
+      html += '</div>';
+
+      html += '<div style="background:rgba(37,211,102,0.1);padding:16px;border-radius:12px;margin-bottom:20px;border-left:4px solid #25d366;">';
+      html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">`;
+      html += `<div><span style="color:#999;font-size:11px;text-transform:uppercase;">Unit Price</span><br><span style="color:#25d366;font-size:18px;font-weight:bold;">Rs.${product.price}</span></div>`;
+      html += `<div><span style="color:#999;font-size:11px;text-transform:uppercase;">In Stock</span><br><span style="color:#f0e6b8;font-size:18px;font-weight:bold;">${product.stock}</span></div>`;
+      html += `</div>`;
+      html += '</div>';
+
+      html += '<label style="display:block;margin-bottom:20px;color:#f6eec2;">';
+      html += '<span style="display:block;margin-bottom:12px;font-size:14px;font-weight:bold;text-transform:uppercase;color:#999;">Select Quantity</span>';
+      html += '<div style="display:flex;align-items:center;gap:12px;background:#222;padding:16px;border-radius:10px;border:2px solid #444;">';
+      html += '<button id="decreaseQty" style="width:48px;height:48px;background:linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:24px;font-weight:bold;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">−</button>';
+      html += `<input id="quantityInput" type="number" min="1" max="${product.stock}" value="1" style="flex:1;padding:12px;border-radius:8px;border:1px solid #444;background:#111;color:#f6eec2;font-size:20px;font-weight:bold;text-align:center;box-sizing:border-box;">`;
+      html += '<button id="increaseQty" style="width:48px;height:48px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:24px;font-weight:bold;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">+</button>';
+      html += '</div>';
+      html += '</label>';
+
+      html += `<div id="totalPrice" style="background:linear-gradient(135deg, #25d366 0%, #20b854 100%);padding:16px;border-radius:10px;margin-bottom:20px;text-align:center;color:#000;font-size:20px;font-weight:bold;">💰 Total: Rs.${product.price}</div>`;
+      html += `<button id="addToOrderBtn" style="width:100%;padding:14px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:16px;margin-bottom:12px;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.5px;">✓ Add to Order</button>`;
+      html += `<button id="cancelBtn" style="width:100%;padding:14px;background:#444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:14px;transition:all 0.2s;">✕ Cancel</button>`;
+      html += '</div>';
+
+      // Create modal overlay
+      const modal = document.createElement('div');
+      modal.id = 'quantityModalOverlay';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:1001;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
+      modal.innerHTML = html;
+      document.body.appendChild(modal);
+
+      // Get references to elements
+      const quantityInput = document.getElementById('quantityInput');
+      const totalPriceDiv = document.getElementById('totalPrice');
+      const decreaseBtn = document.getElementById('decreaseQty');
+      const increaseBtn = document.getElementById('increaseQty');
+      const addBtn = document.getElementById('addToOrderBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+      const closeBtn = document.getElementById('closeQuantityModal');
+
+      // Function to update total price
+      const updateTotal = () => {
+        const qty = parseInt(quantityInput.value) || 1;
+        const total = product.price * qty;
+        totalPriceDiv.textContent = `💰 Total: Rs.${total}`;
+      };
+
+      // Quantity controls
+      decreaseBtn.addEventListener('click', () => {
+        let qty = parseInt(quantityInput.value) || 1;
+        if (qty > 1) {
+          quantityInput.value = qty - 1;
+          updateTotal();
+        }
+      });
+
+      increaseBtn.addEventListener('click', () => {
+        let qty = parseInt(quantityInput.value) || 1;
+        if (qty < product.stock) {
+          quantityInput.value = qty + 1;
+          updateTotal();
+        }
+      });
+
+      quantityInput.addEventListener('input', updateTotal);
+
+      // Add to order
+      addBtn.addEventListener('click', () => {
+        const qty = parseInt(quantityInput.value) || 1;
+        const orderTextarea = document.querySelector('textarea[name="order"]');
+        
+        if (orderTextarea) {
+          const currentText = orderTextarea.value.trim();
+          const newItem = `• ${product.name} (Rs.${product.price}) x${qty}`;
+          orderTextarea.value = currentText ? currentText + '\n' + newItem : newItem;
+          
+          // Update order summary
+          updateOrderSummary();
+          
+          // Close modal
+          modal.remove();
+          
+          // Show success message
+          showSuccessNotification(`✅ Added ${product.name} (x${qty}) to order`);
+        }
+      });
+
+      // Cancel button
+      cancelBtn.addEventListener('click', () => modal.remove());
+      closeBtn.addEventListener('click', () => modal.remove());
+    }
+
+    // Global handlers for product modal buttons
+    window.handleDecreaseQty = function(btn) {
+      console.log('📉 Decrease clicked');
+      try {
+        const card = btn.closest('.product-card');
+        console.log('Card found:', !!card);
+        if (card) {
+          const qtyInput = card.querySelector('input[type="number"]');
+          console.log('QtyInput found:', !!qtyInput, 'Current value:', qtyInput?.value);
+          if (qtyInput) {
+            let qty = parseInt(qtyInput.value) || 1;
+            if (qty > 1) {
+              qtyInput.value = qty - 1;
+              // Add highlight animation
+              qtyInput.classList.remove('qty-highlight');
+              void qtyInput.offsetWidth; // Trigger reflow to restart animation
+              qtyInput.classList.add('qty-highlight');
+              setTimeout(() => qtyInput.classList.remove('qty-highlight'), 600);
+              // Trigger input event to notify any listeners
+              qtyInput.dispatchEvent(new Event('input', { bubbles: true }));
+              qtyInput.dispatchEvent(new Event('change', { bubbles: true }));
+              console.log('✅ Qty decreased to:', qtyInput.value);
+            } else {
+              console.log('⚠️ Qty already at minimum (1)');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error in handleDecreaseQty:', error.message);
+      }
+    };
+
+    window.handleIncreaseQty = function(btn) {
+      console.log('📈 Increase clicked');
+      try {
+        const card = btn.closest('.product-card');
+        console.log('Card found:', !!card);
+        if (card) {
+          const qtyInput = card.querySelector('input[type="number"]');
+          console.log('QtyInput found:', !!qtyInput, 'Current value:', qtyInput?.value);
+          if (qtyInput) {
+            let qty = parseInt(qtyInput.value) || 1;
+            const maxStock = parseInt(qtyInput.max);
+            console.log('Current qty:', qty, 'Max stock:', maxStock);
+            if (qty < maxStock) {
+              qtyInput.value = qty + 1;
+              // Add highlight animation
+              qtyInput.classList.remove('qty-highlight');
+              void qtyInput.offsetWidth; // Trigger reflow to restart animation
+              qtyInput.classList.add('qty-highlight');
+              setTimeout(() => qtyInput.classList.remove('qty-highlight'), 600);
+              // Trigger input event to notify any listeners
+              qtyInput.dispatchEvent(new Event('input', { bubbles: true }));
+              qtyInput.dispatchEvent(new Event('change', { bubbles: true }));
+              console.log('✅ Qty increased to:', qtyInput.value);
+            } else {
+              console.log('⚠️ Qty already at maximum:', maxStock);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error in handleIncreaseQty:', error.message);
+      }
+    };
+
+    window.handleAddProduct = function(btn) {
+      console.log('🎯 handleAddProduct called');
+      console.log('Button:', btn);
+      try {
+        const card = btn.closest('.product-card');
+        console.log('Card found:', !!card);
+        if (card) {
+          const qtyInput = card.querySelector('input[type="number"]');
+          console.log('QtyInput found:', !!qtyInput);
+          if (qtyInput) {
+            const productName = btn.getAttribute('data-name');
+            const productPrice = parseInt(btn.getAttribute('data-price'));
+            const quantity = parseInt(qtyInput.value) || 1;
+            console.log('Product data:', {name: productName, price: productPrice, qty: quantity});
+            
+            const orderTextarea = document.querySelector('textarea[name="order"]');
+            console.log('Order textarea found:', !!orderTextarea, 'Textarea:', orderTextarea);
+            if (orderTextarea) {
+              const currentText = orderTextarea.value.trim();
+              const newItem = `• ${productName} (Rs.${productPrice}) x${quantity}`;
+              console.log('Adding item to order:', newItem);
+              orderTextarea.value = currentText ? currentText + '\n' + newItem : newItem;
+              console.log('✅ Order textarea updated. New value:', orderTextarea.value);
+              
+              // Call updateOrderSummary - verify it exists
+              if (typeof updateOrderSummary === 'function') {
+                console.log('🔄 Calling updateOrderSummary()');
+                updateOrderSummary();
+                console.log('✅ updateOrderSummary() completed');
+              } else {
+                console.error('❌ updateOrderSummary is not a function!', typeof updateOrderSummary);
+              }
+              
+              // Show notification
+              if (typeof showSuccessNotification === 'function') {
+                showSuccessNotification(`✅ Added ${productName} (x${quantity}) to order`);
+              } else {
+                console.warn('⚠️ showSuccessNotification not found');
+                alert(`✅ Added ${productName} (x${quantity}) to order`);
+              }
+              
+              // Reset quantity
+              qtyInput.value = 1;
+              console.log('✅ Product added successfully');
+            } else {
+              console.error('❌ Order textarea not found');
+              alert('❌ Order textarea element not found on page');
+            }
+          } else {
+            console.error('❌ Quantity input not found in card');
+          }
+        } else {
+          console.error('❌ Product card not found');
+        }
+      } catch (error) {
+        console.error('❌ Error in handleAddProduct:', error.message);
+        console.error('Stack:', error.stack);
+        alert('Error adding product: ' + error.message);
+      }
+    };
+
+    window.showAdminProductsModal = function() {
+      console.log('🎯 Opening Quick Pick Modal...');
+      const adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
       
       if (adminProducts.length === 0) {
-        alert('No products available. Admin needs to add products first.');
+        alert('❌ No products available. Admin needs to add products first.');
         return;
       }
 
-      // Get unique categories
-      const categories = [...new Set(adminProducts.map(p => p.category).filter(c => c))];
+      console.log('📦 Found', adminProducts.length, 'products');
 
-      let html = '<div style="background:#1a1a1a;max-width:1100px;margin:30px auto;border-radius:12px;padding:24px;color:#f6eec2;position:relative;z-index:1001;">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">';
-      html += '<h2 style="margin:0;font-size:28px;">🛒 Pick Your Items</h2>';
-      html += '<button id="closeProductsModal" style="background:transparent;border:1px solid #888;color:#f6eec2;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:18px;font-weight:bold;">✕</button>';
+      // Build modal HTML
+      let html = '<div id="modalContent" style="background:#1a1a1a;max-width:1200px;width:95%;max-height:90vh;border-radius:16px;padding:24px;color:#f6eec2;border:2px solid #25d366;overflow-y:auto;">';
+      
+      // Header
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:2px solid #25d366;padding-bottom:16px;">';
+      html += '<h2 style="margin:0;font-size:24px;color:#25d366;">🛒 Quick Pick Items</h2>';
+      html += '<button id="closeModal" style="background:#ff6b6b;border:none;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:16px;font-weight:bold;">✕ Close</button>';
       html += '</div>';
 
-      // Filter section
-      html += '<div style="background:#222;padding:16px;border-radius:8px;margin-bottom:20px;border:1px solid #444;">';
-      
-      // Search box
-      html += '<div style="margin-bottom:12px;">';
-      html += '<input id="productSearchInput" type="text" placeholder="🔍 Search items by name..." style="width:100%;padding:12px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;box-sizing:border-box;font-size:14px;">';
+      // Search and Filter Section
+      html += '<div style="background:linear-gradient(135deg, rgba(37,211,102,0.1) 0%, rgba(37,211,102,0.05) 100%);padding:10px;border-radius:8px;border:1px solid rgba(37,211,102,0.3);margin-bottom:16px;">';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+      html += '<div>';
+      html += '<label style="display:block;color:#999;font-size:10px;margin-bottom:4px;text-transform:uppercase;font-weight:bold;">🔍 Search</label>';
+      html += '<input id="quickPickSearch" type="text" placeholder="Search by name..." style="width:100%;padding:8px;border-radius:6px;border:2px solid #25d366;background:#111;color:#f6eec2;font-size:12px;box-sizing:border-box;">';
       html += '</div>';
-
-      // Category chips
-      if (categories.length > 0) {
-        html += '<div style="margin-bottom:12px;">';
-        html += '<div style="font-size:12px;color:#999;margin-bottom:8px;font-weight:bold;">CATEGORIES</div>';
-        html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
-        html += '<button id="categoryAll" class="category-chip active" data-category="" style="padding:8px 16px;border-radius:20px;border:2px solid #25d366;background:#25d366;color:#000;cursor:pointer;font-weight:bold;font-size:12px;transition:all 0.2s;">All Items</button>';
-        categories.forEach(cat => {
-          const catDisplay = cat.charAt(0).toUpperCase() + cat.slice(1);
-          html += `<button class="category-chip" data-category="${cat}" style="padding:8px 16px;border-radius:20px;border:2px solid #444;background:transparent;color:#f6eec2;cursor:pointer;font-weight:bold;font-size:12px;transition:all 0.2s;">${catDisplay}</button>`;
-        });
-        html += '</div>';
-        html += '</div>';
-      }
-
-      // Brand filter
-      if (adminBrands.length > 0) {
-        html += '<div style="margin-bottom:12px;">';
-        html += '<div style="font-size:12px;color:#999;margin-bottom:8px;font-weight:bold;">BRANDS</div>';
-        html += '<select id="brandFilter" style="width:100%;padding:10px;border-radius:6px;border:1px solid #444;background:#111;color:#f6eec2;box-sizing:border-box;font-size:13px;">';
-        html += '<option value="">🏷️ All Brands</option>';
-        adminBrands.forEach(brand => {
-          const brandName = typeof brand === 'string' ? brand : brand.name;
-          html += `<option value="${brandName}">${brandName}</option>`;
-        });
-        html += '</select>';
-        html += '</div>';
-      }
-      
+      html += '<div>';
+      html += '<label style="display:block;color:#999;font-size:10px;margin-bottom:4px;text-transform:uppercase;font-weight:bold;">🏷️ Category</label>';
+      html += '<select id="quickPickCategory" style="width:100%;padding:8px;border-radius:6px;border:2px solid #667eea;background:#111;color:#f6eec2;font-size:12px;box-sizing:border-box;">';
+      html += '<option value="">All Categories</option>';
+      html += '<option value="produce">🥬 Produce</option>';
+      html += '<option value="dairy">🥛 Dairy</option>';
+      html += '<option value="bakery">🍞 Bakery</option>';
+      html += '<option value="meat">🍖 Meat</option>';
+      html += '<option value="pantry">🥫 Pantry</option>';
+      html += '<option value="beverages">🥤 Beverages</option>';
+      html += '<option value="snacks">🍿 Snacks</option>';
+      html += '</select>';
       html += '</div>';
-
-      // Products grid with enhanced styling
-      html += '<div id="adminProductsContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:16px;">';
+      html += '</div>';
+      html += '</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;" id="quickPickProductsGrid">';
       
-      adminProducts.forEach((prod, idx) => {
-        const catEmoji = {
-          'produce': '🥬',
-          'dairy': '🥛',
-          'bakery': '🍞',
-          'meat': '🍖',
-          'pantry': '🥫',
-          'beverages': '🥤',
-          'snacks': '🍿'
-        };
-        const emoji = catEmoji[prod.category] || '📦';
+      adminProducts.forEach((product, idx) => {
+        const emoji = { 'produce': '🥬', 'dairy': '🥛', 'bakery': '🍞', 'meat': '🍖', 'pantry': '🥫', 'beverages': '🥤', 'snacks': '🍿' }[product.category] || '📦';
+        const imageUrl = product.image || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23333' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%23666' font-size='40'%3E${emoji}%3C/text%3E%3C/svg%3E`;
         
-        html += `<div class="product-card" data-idx="${idx}" data-name="${prod.name}" data-brand="${prod.brand || ''}" data-category="${prod.category || ''}" style="background:linear-gradient(135deg, #222 0%, #2a2a2a 100%);padding:16px;border-radius:10px;border:2px solid #444;text-align:center;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;">
-          <div style="position:absolute;top:8px;right:8px;font-size:24px;opacity:0.3;">${emoji}</div>
-          <h4 style="color:#f6eec2;margin:0 0 8px 0;font-size:15px;font-weight:bold;word-wrap:break-word;">${prod.name}</h4>
-          <div style="color:#999;font-size:11px;margin-bottom:6px;">📦 ${prod.category ? prod.category.charAt(0).toUpperCase() + prod.category.slice(1) : 'General'}</div>
-          <div style="color:#99cc99;font-size:11px;margin-bottom:10px;font-weight:bold;">🏷️ ${prod.brand || 'Generic'}</div>
-          <div style="background:#25d366;color:#000;padding:8px;border-radius:6px;margin-bottom:8px;font-weight:bold;font-size:16px;">Rs.${prod.price}</div>
-          <div style="color:#999;font-size:11px;margin-bottom:8px;">📊 Stock: ${prod.stock}</div>
-          <button class="add-to-order-btn" style="width:100%;padding:8px;background:#25d366;color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;transition:all 0.2s;">+ Add to Order</button>
-        </div>`;
+        html += `
+          <div id="card-${idx}" class="product-card-item" data-idx="${idx}" style="background:linear-gradient(135deg,#222,#2a2a2a);padding:6px;border-radius:5px;border:1px solid #444;display:flex;flex-direction:column;transition:all 0.3s;overflow:hidden;">
+            <!-- Product Image -->
+            <div style="width:100%;height:65px;background:#111;border-radius:3px;margin-bottom:5px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+              <img src="${imageUrl}" alt="${product.name}" style="width:90%;height:90%;object-fit:contain;border-radius:3px;">
+            </div>
+            
+            <!-- Product Info -->
+            <h4 style="margin:0 0 3px 0;font-size:9px;font-weight:bold;color:#f6eec2;line-height:1.1;min-height:18px;word-break:break-word;">${product.name}</h4>
+            <div style="color:#999;font-size:7px;margin-bottom:2px;">📦 ${product.category || 'General'}</div>
+            <div style="background:#25d366;color:#000;padding:3px;border-radius:3px;margin-bottom:4px;font-weight:bold;text-align:center;font-size:10px;">Rs.${product.price}</div>
+            <div style="color:#999;font-size:6px;margin-bottom:4px;">Stock: ${product.stock}</div>
+            
+            <!-- Quantity Controls -->
+            <div style="display:flex;gap:2px;margin-bottom:4px;background:#111;padding:3px;border-radius:3px;">
+              <button id="dec-${idx}" onclick="window.decreaseItemQty(${idx})" style="flex:1;padding:2px;background:#ff6b6b;color:#fff;border:none;border-radius:2px;cursor:pointer;font-weight:bold;font-size:11px;">−</button>
+              <input id="qty-${idx}" type="number" value="1" min="1" max="${product.stock}" style="flex:1;padding:1px;text-align:center;background:#222;color:#f6eec2;border:1px solid #444;border-radius:2px;font-weight:bold;font-size:9px;">
+              <button id="inc-${idx}" onclick="window.increaseItemQty(${idx})" style="flex:1;padding:2px;background:#25d366;color:#000;border:none;border-radius:2px;cursor:pointer;font-weight:bold;font-size:11px;">+</button>
+            </div>
+            
+            <!-- Add Button -->
+            <button id="add-${idx}" onclick="window.addItemToOrder(${idx})" style="width:100%;padding:4px;background:linear-gradient(135deg,#25d366,#20b854);color:#000;border:none;border-radius:3px;cursor:pointer;font-weight:bold;font-size:8px;text-transform:uppercase;transition:all 0.3s;line-height:1;">✓ ADD</button>
+          </div>
+        `;
       });
-
+      
       html += '</div>';
       html += '</div>';
 
       // Create overlay
       const overlay = document.createElement('div');
-      overlay.id = 'productsModalOverlay';
-      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
+      overlay.id = 'quickPickOverlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;';
       overlay.innerHTML = html;
       document.body.appendChild(overlay);
 
-      // Add hover effect to product cards
-      const productCards = document.querySelectorAll('.product-card');
-      productCards.forEach(card => {
-        card.addEventListener('mouseenter', () => {
-          card.style.background = 'linear-gradient(135deg, #333 0%, #3a3a3a 100%)';
-          card.style.borderColor = '#25d366';
-          card.style.transform = 'translateY(-8px)';
-          card.style.boxShadow = '0 8px 24px rgba(37, 211, 102, 0.2)';
-        });
-        card.addEventListener('mouseleave', () => {
-          card.style.background = 'linear-gradient(135deg, #222 0%, #2a2a2a 100%)';
-          card.style.borderColor = '#444';
-          card.style.transform = 'translateY(0)';
-          card.style.boxShadow = 'none';
-        });
-
-        const addBtn = card.querySelector('.add-to-order-btn');
-        addBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const idx = parseInt(card.getAttribute('data-idx'));
-          showProductQuantityForm(adminProducts[idx], adminProducts, overlay);
-        });
-      });
-
-      // Category chip functionality
-      const categoryChips = document.querySelectorAll('.category-chip');
-      categoryChips.forEach(chip => {
-        chip.addEventListener('click', () => {
-          categoryChips.forEach(c => {
-            c.style.background = 'transparent';
-            c.style.borderColor = '#444';
-            c.style.color = '#f6eec2';
-          });
-          chip.style.background = '#25d366';
-          chip.style.borderColor = '#25d366';
-          chip.style.color = '#000';
-
-          const selectedCategory = chip.getAttribute('data-category');
-          const selectedBrand = document.getElementById('brandFilter') ? document.getElementById('brandFilter').value : '';
-          
-          productCards.forEach(card => {
-            const cardCategory = card.getAttribute('data-category');
-            const cardBrand = card.getAttribute('data-brand');
-            const matchesCategory = selectedCategory === '' || cardCategory === selectedCategory;
-            const matchesBrand = selectedBrand === '' || cardBrand === selectedBrand;
-            
-            if (matchesCategory && matchesBrand) {
-              card.style.display = 'block';
-            } else {
-              card.style.display = 'none';
-            }
-          });
-        });
-      });
-
-      // Close button
-      document.getElementById('closeProductsModal').addEventListener('click', () => {
+      // Close button handler
+      document.getElementById('closeModal').addEventListener('click', () => {
+        console.log('📍 Closing modal');
         overlay.remove();
       });
 
-      // Brand filter functionality
-      const brandFilter = document.getElementById('brandFilter');
-      if (brandFilter) {
-        brandFilter.addEventListener('change', () => {
-          const selectedBrand = brandFilter.value;
-          const activeCategory = document.querySelector('.category-chip.active');
-          const selectedCategory = activeCategory ? activeCategory.getAttribute('data-category') : '';
-          
-          productCards.forEach(card => {
-            const cardBrand = card.getAttribute('data-brand');
-            const cardCategory = card.getAttribute('data-category');
-            const matchesBrand = selectedBrand === '' || cardBrand === selectedBrand;
-            const matchesCategory = selectedCategory === '' || cardCategory === selectedCategory;
-            
-            if (matchesBrand && matchesCategory) {
-              card.style.display = 'block';
-            } else {
-              card.style.display = 'none';
-            }
-          });
-        });
-      }
-
-      // Search functionality
-      const searchInput = document.getElementById('productSearchInput');
-      searchInput.addEventListener('input', () => {
-        const query = searchInput.value.toLowerCase();
-        const activeCategory = document.querySelector('.category-chip.active');
-        const selectedCategory = activeCategory ? activeCategory.getAttribute('data-category') : '';
-        const selectedBrand = brandFilter ? brandFilter.value : '';
+      // Filter function
+      const filterQuickPickProducts = () => {
+        const searchTerm = document.getElementById('quickPickSearch').value.toLowerCase();
+        const categoryFilter = document.getElementById('quickPickCategory').value;
+        const grid = document.getElementById('quickPickProductsGrid');
         
-        productCards.forEach(card => {
-          const name = card.getAttribute('data-name').toLowerCase();
-          const cardBrand = card.getAttribute('data-brand');
-          const cardCategory = card.getAttribute('data-category');
-          const matchesSearch = name.includes(query);
-          const matchesBrand = selectedBrand === '' || cardBrand === selectedBrand;
-          const matchesCategory = selectedCategory === '' || cardCategory === selectedCategory;
-          
-          if (matchesSearch && matchesBrand && matchesCategory) {
-            card.style.display = 'block';
-          } else {
-            card.style.display = 'none';
-          }
+        const filteredProducts = adminProducts.filter(product => {
+          const matchesSearch = product.name.toLowerCase().includes(searchTerm);
+          const matchesCategory = categoryFilter === '' || product.category === categoryFilter;
+          return matchesSearch && matchesCategory;
         });
-      });
+
+        let html = '';
+        filteredProducts.forEach((product, idx) => {
+          const emoji = { 'produce': '🥬', 'dairy': '🥛', 'bakery': '🍞', 'meat': '🍖', 'pantry': '🥫', 'beverages': '🥤', 'snacks': '🍿' }[product.category] || '📦';
+          const imageUrl = product.image || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23333' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%23666' font-size='40'%3E${emoji}%3C/text%3E%3C/svg%3E`;
+          const actualIdx = adminProducts.findIndex(p => p.name === product.name && p.price === product.price);
+          
+          html += `
+            <div id="card-${actualIdx}" class="product-card-item" data-idx="${actualIdx}" style="background:linear-gradient(135deg,#222,#2a2a2a);padding:6px;border-radius:5px;border:1px solid #444;display:flex;flex-direction:column;transition:all 0.3s;overflow:hidden;">
+              <div style="width:100%;height:65px;background:#111;border-radius:3px;margin-bottom:5px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+                <img src="${imageUrl}" alt="${product.name}" style="width:90%;height:90%;object-fit:contain;border-radius:3px;">
+              </div>
+              <h4 style="margin:0 0 3px 0;font-size:9px;font-weight:bold;color:#f6eec2;line-height:1.1;min-height:18px;word-break:break-word;">${product.name}</h4>
+              <div style="color:#999;font-size:7px;margin-bottom:2px;">📦 ${product.category || 'General'}</div>
+              <div style="background:#25d366;color:#000;padding:3px;border-radius:3px;margin-bottom:4px;font-weight:bold;text-align:center;font-size:10px;">Rs.${product.price}</div>
+              <div style="color:#999;font-size:6px;margin-bottom:4px;">Stock: ${product.stock}</div>
+              <div style="display:flex;gap:2px;margin-bottom:4px;background:#111;padding:3px;border-radius:3px;">
+                <button id="dec-${actualIdx}" onclick="window.decreaseItemQty(${actualIdx})" style="flex:1;padding:2px;background:#ff6b6b;color:#fff;border:none;border-radius:2px;cursor:pointer;font-weight:bold;font-size:11px;">−</button>
+                <input id="qty-${actualIdx}" type="number" value="1" min="1" max="${product.stock}" style="flex:1;padding:1px;text-align:center;background:#222;color:#f6eec2;border:1px solid #444;border-radius:2px;font-weight:bold;font-size:9px;">
+                <button id="inc-${actualIdx}" onclick="window.increaseItemQty(${actualIdx})" style="flex:1;padding:2px;background:#25d366;color:#000;border:none;border-radius:2px;cursor:pointer;font-weight:bold;font-size:11px;">+</button>
+              </div>
+              <button id="add-${actualIdx}" onclick="window.addItemToOrder(${actualIdx})" style="width:100%;padding:4px;background:linear-gradient(135deg,#25d366,#20b854);color:#000;border:none;border-radius:3px;cursor:pointer;font-weight:bold;font-size:8px;text-transform:uppercase;transition:all 0.3s;line-height:1;">✓ ADD</button>
+            </div>
+          `;
+        });
+
+        if (filteredProducts.length === 0) {
+          html = '<div style="grid-column:1/-1;padding:40px;text-align:center;color:#999;">No products found</div>';
+        }
+
+        grid.innerHTML = html;
+      };
+
+      // Add event listeners for search and filter
+      document.getElementById('quickPickSearch').addEventListener('input', filterQuickPickProducts);
+      document.getElementById('quickPickCategory').addEventListener('change', filterQuickPickProducts);
 
       // Close on overlay click
       overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) overlay.remove();
+        if (e.target === overlay) {
+          overlay.remove();
+        }
       });
-    }
+
+      console.log('✅ Modal opened successfully');
+    };
+
+    // Item quantity functions
+    window.decreaseItemQty = function(idPrefix, idx) {
+      // Handle both old style (just idx) and new style (idPrefix, idx)
+      if (typeof idPrefix === 'number' && idx === undefined) {
+        idx = idPrefix;
+        idPrefix = '';
+      }
+      
+      console.log('📉 Decreasing qty for', idPrefix ? 'featured' : 'regular', 'item', idx);
+      const inputId = idPrefix ? 'qty-' + idPrefix + '-' + idx : 'qty-' + idx;
+      const input = document.getElementById(inputId);
+      if (input) {
+        let qty = parseInt(input.value) || 1;
+        if (qty > 1) {
+          input.value = qty - 1;
+          input.style.background = '#25d366';
+          setTimeout(() => {
+            input.style.background = '#222';
+          }, 300);
+          console.log('✅ Qty now:', input.value);
+        }
+      }
+    };
+
+    window.increaseItemQty = function(idPrefix, idx) {
+      // Handle both old style (just idx) and new style (idPrefix, idx)
+      if (typeof idPrefix === 'number' && idx === undefined) {
+        idx = idPrefix;
+        idPrefix = '';
+      }
+      
+      console.log('📈 Increasing qty for', idPrefix ? 'featured' : 'regular', 'item', idx);
+      const inputId = idPrefix ? 'qty-' + idPrefix + '-' + idx : 'qty-' + idx;
+      const input = document.getElementById(inputId);
+      if (input) {
+        let qty = parseInt(input.value) || 1;
+        const maxStock = parseInt(input.max) || 999;
+        if (qty < maxStock) {
+          input.value = qty + 1;
+          input.style.background = '#25d366';
+          setTimeout(() => {
+            input.style.background = '#222';
+          }, 300);
+          console.log('✅ Qty now:', input.value);
+        }
+      }
+    };
+
+    window.addItemToOrder = function(idPrefix, idx) {
+      // Handle both old style (just idx) and new style (idPrefix, idx)
+      if (typeof idPrefix === 'number' && idx === undefined) {
+        idx = idPrefix;
+        idPrefix = '';
+      }
+      
+      console.log('🛒 Adding', idPrefix ? 'featured' : 'regular', 'item', idx, 'to order');
+      try {
+        const adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [];
+        const product = adminProducts[idx];
+        const inputId = idPrefix ? 'qty-' + idPrefix + '-' + idx : 'qty-' + idx;
+        const qtyInput = document.getElementById(inputId);
+        const quantity = parseInt(qtyInput.value) || 1;
+
+        if (!product) {
+          console.error('❌ Product not found');
+          alert('❌ Product not found');
+          return;
+        }
+
+        // Add to textarea
+        const textarea = document.querySelector('textarea[name="order"]');
+        if (textarea) {
+          const newItem = `• ${product.name} (Rs.${product.price}) x${quantity}`;
+          const currentText = textarea.value.trim();
+          textarea.value = currentText ? currentText + '\n' + newItem : newItem;
+          console.log('✅ Added to order:', newItem);
+
+          // Update UI
+          window.updateOrderSummary();
+          window.showSuccessNotification(`✅ Added ${product.name} (x${quantity}) to order`);
+
+          // Reset quantity
+          qtyInput.value = 1;
+        } else {
+          console.error('❌ Order textarea not found');
+          alert('❌ Error: Could not find order form');
+        }
+      } catch (error) {
+        console.error('❌ Error adding item:', error);
+        alert('❌ Error: ' + error.message);
+      }
+    };
 
     function showProductQuantityForm(product, allProducts, overlay) {
       const catEmoji = {
@@ -3886,6 +4435,28 @@
       }, 4000);
     }
 
+    function showSuccessNotification(message) {
+      // Remove existing notification if any
+      const existing = document.querySelector('.success-notification');
+      if (existing) existing.remove();
+
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = 'success-notification show';
+      notification.style.cssText = 'position:fixed;top:20px;right:20px;background:linear-gradient(135deg, #25d366 0%, #20b854 100%);color:#000;padding:16px 24px;border-radius:8px;font-weight:bold;z-index:9999;animation:slideIn 0.3s ease-in;box-shadow:0 4px 12px rgba(37, 211, 102, 0.4);';
+      notification.textContent = message;
+      document.body.appendChild(notification);
+
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
+    // Expose to window for global access
+    window.showSuccessNotification = showSuccessNotification;
+
     // Form validation handler
     document.addEventListener('DOMContentLoaded', () => {
       // Get order form
@@ -3942,6 +4513,13 @@
           }
         });
       }
+
+      // Order textarea event listener for summary updates
+      const orderTextarea = document.querySelector('textarea[name="order"]');
+      if (orderTextarea) {
+        orderTextarea.addEventListener('input', updateOrderSummary);
+        orderTextarea.addEventListener('change', updateOrderSummary);
+      }
     });
   </script>
 
@@ -3982,7 +4560,7 @@
     </div>
 
     <!-- Products Grid -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px;" id="productsGrid">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:5px;margin-bottom:16px;" id="productsGrid">
       <div style="padding:40px;text-align:center;grid-column:1/-1;color:#999;">
         ⏳ Loading products...
       </div>
@@ -4117,6 +4695,7 @@
 
     <div class="sidebar-divider"></div>
 
+    <button class="sidebar-btn" id="searchBtn" onclick="openSearchModal();" title="Search Items">🔍 Search</button>
     <button class="sidebar-btn" id="scrollDownBtn" title="Scroll Down">⬇️ Down</button>
     <button class="sidebar-btn" id="contactFloatBtn" title="Contact Us">☎️ Contact</button>
   </div>
